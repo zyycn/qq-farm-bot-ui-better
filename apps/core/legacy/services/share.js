@@ -5,6 +5,7 @@
 const { sendMsgAsync } = require('../utils/network');
 const { types } = require('../utils/proto');
 const { log, toNum } = require('../utils/utils');
+const { getItemById } = require('../config/gameConfig');
 
 const DAILY_KEY = 'daily_share';
 const CHECK_COOLDOWN_MS = 10 * 60 * 1000;
@@ -36,10 +37,17 @@ function getRewardSummary(items) {
         const id = toNum(it.id);
         const count = toNum(it.count);
         if (count <= 0) continue;
-        if (id === 1 || id === 1001) summary.push(`金币${count}`);
-        else if (id === 2 || id === 1101) summary.push(`经验${count}`);
-        else if (id === 1002) summary.push(`点券${count}`);
-        else summary.push(`物品#${id}x${count}`);
+        if (id === 1 || id === 1001) {
+            summary.push(`金币${count}`);
+        } else if (id === 2 || id === 1101) {
+            summary.push(`经验${count}`);
+        } else if (id === 1002) {
+            summary.push(`点券${count}`);
+        } else {
+            const info = getItemById(id);
+            const name = info && info.name ? String(info.name) : `物品#${id}`;
+            summary.push(`${name}x${count}`);
+        }
     }
     return summary.join('/');
 }

@@ -6,6 +6,7 @@ const { isAutomationOn } = require('../models/store');
 const { sendMsgAsync, networkEvents } = require('../utils/network');
 const { types } = require('../utils/proto');
 const { toLong, toNum, log, logWarn, sleep } = require('../utils/utils');
+const { getItemById } = require('../config/gameConfig');
 const { createScheduler } = require('./scheduler');
 const { recordOperation } = require('./stats');
 
@@ -119,10 +120,17 @@ function getRewardSummary(items) {
     for (const item of items) {
         const id = toNum(item.id);
         const count = toNum(item.count);
-        if (id === 1 || id === 1001) summary.push(`金币${count}`);
-        else if (id === 2 || id === 1101) summary.push(`经验${count}`);
-        else if (id === 1002) summary.push(`点券${count}`);
-        else summary.push(`物品#${id}x${count}`);
+        if (id === 1 || id === 1001) {
+            summary.push(`金币${count}`);
+        } else if (id === 2 || id === 1101) {
+            summary.push(`经验${count}`);
+        } else if (id === 1002) {
+            summary.push(`点券${count}`);
+        } else {
+            const info = getItemById(id);
+            const name = info && info.name ? String(info.name) : `物品#${id}`;
+            summary.push(`${name}x${count}`);
+        }
     }
     return summary.join('/');
 }
