@@ -1,15 +1,13 @@
 <script setup lang="ts">
 import { useStorage } from '@vueuse/core'
-import { storeToRefs } from 'pinia'
+
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { authApi } from '@/api'
 import ThemeToggle from '@/components/ThemeToggle.vue'
-import { useAppStore } from '@/stores'
 
 const router = useRouter()
-const appStore = useAppStore()
-const { isDark } = storeToRefs(appStore)
+
 const password = ref('')
 const error = ref('')
 const loading = ref(false)
@@ -44,11 +42,11 @@ async function handleLogin() {
   >
     <ThemeToggle class="absolute right-3 top-3 z-30" />
 
-    <!-- Sky gradient: Design Token -->
+    <!-- Sky gradient -->
     <div
       class="absolute inset-0 z-0"
       :style="{
-        background: `linear-gradient(to bottom, var(--ant-color-bg-layout) 0%, var(--ant-color-bg-spotlight) 50%, var(--ant-color-primary-bg) 100%)`,
+        background: `linear-gradient(to bottom, var(--ant-color-info-bg) 0%, var(--ant-color-info-border) 45%, var(--ant-color-primary-bg) 100%)`,
       }"
     />
 
@@ -61,9 +59,9 @@ async function handleLogin() {
     >
       <defs>
         <linearGradient id="grass" x1="0" x2="0" y1="0" y2="1">
-          <stop offset="0" :stop-color="isDark ? 'rgba(74,222,128,0.12)' : 'rgba(34,197,94,0.55)'" />
-          <stop offset="0.5" :stop-color="isDark ? 'rgba(74,222,128,0.18)' : 'rgba(34,197,94,0.35)'" />
-          <stop offset="1" :stop-color="isDark ? 'rgba(74,222,128,0.08)' : 'rgba(34,197,94,0.2)'" />
+          <stop offset="0" stop-color="var(--ant-color-primary)" stop-opacity="0.35" />
+          <stop offset="0.5" stop-color="var(--ant-color-primary)" stop-opacity="0.2" />
+          <stop offset="1" stop-color="var(--ant-color-primary)" stop-opacity="0.08" />
         </linearGradient>
       </defs>
       <path d="M0 32V18Q25 8 50 18t50 0v14Z" fill="url(#grass)" />
@@ -78,7 +76,6 @@ async function handleLogin() {
           left: '8%',
           fontSize: '48px',
           color: 'var(--ant-color-fill)',
-          opacity: 0.6,
         }"
       />
       <span
@@ -88,7 +85,7 @@ async function handleLogin() {
           right: '10%',
           fontSize: '36px',
           color: 'var(--ant-color-fill)',
-          opacity: 0.45,
+          opacity: 0.2,
         }"
       />
       <span
@@ -98,7 +95,7 @@ async function handleLogin() {
           left: '5%',
           fontSize: '28px',
           color: 'var(--ant-color-fill)',
-          opacity: 0.35,
+          opacity: 0.9,
         }"
       />
     </div>
