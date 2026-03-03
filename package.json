@@ -1,6 +1,7 @@
 {
-  "name": "qq-farm-bot-ui-better",
+  "name": "qq-farm-bot-nest",
   "private": true,
+  "description": "QQ 农场多账号自动挂机机器人，后端基于 NestJS + SQLite（Drizzle ORM），前端基于 Vue 3 + Ant Design Vue + Pinia，提供 Web 控制面板和实时日志分析。",
   "packageManager": "pnpm@10.30.2",
   "scripts": {
     "build": "turbo run build",
