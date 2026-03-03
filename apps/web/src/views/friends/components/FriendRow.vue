@@ -11,6 +11,7 @@ const props = defineProps<{
   lands: any[]
   landsLoading: boolean
   avatarErrorKeys: Set<string>
+  disabled?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -127,6 +128,8 @@ function handleToggleBlacklist(e: Event) {
         <a-tooltip v-for="op in OP_BUTTONS" :key="op.type" :title="op.label" placement="top">
           <a-button
             class="flex items-center justify-center border rounded-lg border-solid p-1.5 transition-all a-bg-container a-border-border active:scale-95 hover:shadow-sm"
+            :disabled="disabled"
+            :class="disabled ? 'opacity-40 pointer-events-none' : ''"
             @click="handleOperate(op.type, $event)"
           >
             <div :class="op.icon" />
@@ -135,10 +138,11 @@ function handleToggleBlacklist(e: Event) {
         <a-tooltip :title="blacklisted ? '移出黑名单' : '加入黑名单'" placement="top">
           <a-button
             class="ml-1 flex items-center justify-center rounded-lg p-1.5 transition-all active:scale-95"
+            :disabled="disabled"
             :class="
-              blacklisted
+              (blacklisted
                 ? 'border border-solid a-border-success a-bg-primary-bg'
-                : 'border border-solid a-border-border a-bg-container'
+                : 'border border-solid a-border-border a-bg-container') + (disabled ? ' opacity-40 pointer-events-none' : '')
             "
             @click="handleToggleBlacklist($event)"
           >
@@ -161,6 +165,8 @@ function handleToggleBlacklist(e: Event) {
         v-for="op in OP_BUTTONS"
         :key="op.type"
         class="flex items-center gap-1 border rounded-lg border-solid px-2 py-1 text-sm transition-all a-bg-container a-border-border active:scale-95"
+        :disabled="disabled"
+        :class="disabled ? 'opacity-40 pointer-events-none' : ''"
         @click="handleOperate(op.type, $event)"
       >
         <div class="" :class="op.icon" />
@@ -168,10 +174,11 @@ function handleToggleBlacklist(e: Event) {
       </a-button>
       <a-button
         class="flex items-center gap-1 rounded-lg px-2 py-1 text-sm transition-all active:scale-95"
+        :disabled="disabled"
         :class="
-          blacklisted
+          (blacklisted
             ? 'border border-solid a-border-success a-bg-primary-bg'
-            : 'border border-solid a-border-border a-bg-container'
+            : 'border border-solid a-border-border a-bg-container') + (disabled ? ' opacity-40 pointer-events-none' : '')
         "
         @click="handleToggleBlacklist($event)"
       >

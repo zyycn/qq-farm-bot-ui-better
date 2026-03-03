@@ -1,10 +1,10 @@
 import type { Socket } from 'socket.io-client'
-import { useStorage } from '@vueuse/core'
 import { defineStore } from 'pinia'
 import { io } from 'socket.io-client'
 import { ref } from 'vue'
 import { statusApi } from '@/api'
 import { ACCOUNT_LOGS_MAX_LENGTH, LOGS_MAX_LENGTH, SOCKET_PATH } from '../constants'
+import { useUserStore } from './user'
 
 interface DailyGift {
   key: string
@@ -33,7 +33,6 @@ export const useStatusStore = defineStore('status', () => {
   const realtimeConnected = ref(false)
   const realtimeLogsEnabled = ref(true)
   const currentRealtimeAccountId = ref('')
-  const tokenRef = useStorage('admin_token', '')
 
   let socket: Socket | null = null
 
@@ -102,12 +101,14 @@ export const useStatusStore = defineStore('status', () => {
     if (socket)
       return socket
 
+    const token = useUserStore().adminToken
+
     socket = io('/', {
       path: SOCKET_PATH,
       autoConnect: false,
       transports: ['websocket'],
       auth: {
-        token: tokenRef.value,
+        token,
       },
     })
 
@@ -140,12 +141,13 @@ export const useStatusStore = defineStore('status', () => {
 
   function connectRealtime(accountId: string) {
     currentRealtimeAccountId.value = String(accountId || '').trim()
-    if (!tokenRef.value)
+    const token = useUserStore().adminToken
+    if (!token)
       return
 
     const client = ensureRealtimeSocket()
     client.auth = {
-      token: tokenRef.value,
+      token,
       accountId: currentRealtimeAccountId.value || 'all',
     }
 

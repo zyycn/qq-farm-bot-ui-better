@@ -2,7 +2,6 @@ import type { GlobalToken } from 'antdv-next'
 import { defineStore } from 'pinia'
 import { computed, ref, watch } from 'vue'
 import { settingsApi } from '@/api'
-import { SIDEBAR_COLLAPSED_KEY, THEME_KEY } from '../constants'
 
 const lightTokens: Partial<GlobalToken> = {
   colorPrimary: '#22c55e',
@@ -30,8 +29,8 @@ const darkTokens: Partial<GlobalToken> = {
 
 export const useAppStore = defineStore('app', () => {
   const sidebarOpen = ref(false)
-  const sidebarCollapsed = ref(localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === '1')
-  const isDark = ref(localStorage.getItem(THEME_KEY) === 'dark')
+  const sidebarCollapsed = ref(false)
+  const isDark = ref(false)
 
   const themeTokens = computed<Partial<GlobalToken>>(() => isDark.value ? darkTokens : lightTokens)
 
@@ -49,7 +48,6 @@ export const useAppStore = defineStore('app', () => {
 
   function setSidebarCollapsed(val: boolean) {
     sidebarCollapsed.value = val
-    localStorage.setItem(SIDEBAR_COLLAPSED_KEY, val ? '1' : '0')
   }
 
   function toggleSidebarCollapsed() {
@@ -62,7 +60,6 @@ export const useAppStore = defineStore('app', () => {
       if (res?.ui) {
         const t = res.ui.theme
         isDark.value = t === 'dark'
-        localStorage.setItem(THEME_KEY, t)
       }
     }
     catch {
@@ -73,7 +70,6 @@ export const useAppStore = defineStore('app', () => {
   async function setTheme(t: 'light' | 'dark') {
     try {
       isDark.value = t === 'dark'
-      localStorage.setItem(THEME_KEY, t)
     }
     catch (e) {
       console.error('设置主题失败:', e)
@@ -106,4 +102,9 @@ export const useAppStore = defineStore('app', () => {
     fetchTheme,
     setTheme,
   }
+}, {
+  persist: {
+    pick: ['isDark', 'sidebarCollapsed'],
+    storage: localStorage,
+  },
 })

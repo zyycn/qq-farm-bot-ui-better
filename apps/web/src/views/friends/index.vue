@@ -3,6 +3,7 @@ import { useIntervalFn } from '@vueuse/core'
 import { storeToRefs } from 'pinia'
 import { computed, ref } from 'vue'
 import ConfirmModal from '@/components/ConfirmModal.vue'
+import EmptyState from '@/components/EmptyState.vue'
 import { useAccountRefresh } from '@/composables/useAccountRefresh'
 import { useFriendLandsWithCountdown } from '@/composables/useFriendLandsWithCountdown'
 import { useAccountStore, useFriendStore, useStatusStore } from '@/stores'
@@ -70,11 +71,13 @@ async function loadFriends() {
   const acc = currentAccount.value
   if (!acc)
     return
+  if (!acc.running)
+    return
 
   if (!realtimeConnected.value)
     await statusStore.fetchStatus(currentAccountId.value)
 
-  if (acc.running && status.value?.connection?.connected) {
+  if (status.value?.connection?.connected) {
     avatarErrorKeys.value.clear()
     friendStore.fetchFriends(currentAccountId.value)
     friendStore.fetchBlacklist(currentAccountId.value)
@@ -105,6 +108,8 @@ async function handleOp(friendId: string, type: string, e: Event) {
   e.stopPropagation()
   if (!currentAccountId.value)
     return
+  if (!currentAccount.value?.running)
+    return
   confirmAction('确定执行此操作吗?', async () => {
     await friendStore.operate(currentAccountId.value!, friendId, type)
   })
@@ -113,6 +118,8 @@ async function handleOp(friendId: string, type: string, e: Event) {
 async function handleToggleBlacklist(friend: any, e: Event) {
   e.stopPropagation()
   if (!currentAccountId.value)
+    return
+  if (!currentAccount.value?.running)
     return
   await friendStore.toggleBlacklist(currentAccountId.value, Number(friend.gid))
 }
@@ -129,25 +136,16 @@ function handleAvatarError(key: string) {
       好友农场
     </div>
 
-    <div v-if="!currentAccountId" class="flex flex-1 flex-col items-center justify-center gap-3">
-      <div class="i-twemoji-people-hugging text-5xl opacity-30" />
-      <div class="a-color-text-tertiary">
-        请先在侧边栏选择账号
-      </div>
+    <div v-if="!currentAccountId" class="flex flex-1 items-center justify-center">
+      <EmptyState icon="i-twemoji-people-hugging text-5xl" description="请先在侧边栏选择账号" />
     </div>
 
-    <div v-else-if="!connected" class="flex flex-1 flex-col items-center justify-center gap-3">
-      <div class="i-twemoji-warning text-4xl" />
-      <div class="a-color-text-secondary">
-        账号未连接，请先运行账号
-      </div>
+    <div v-else-if="!connected" class="flex flex-1 items-center justify-center">
+      <EmptyState icon="i-twemoji-electric-plug text-5xl" description="账号未连接，请先运行账号" />
     </div>
 
-    <div v-else-if="friends.length === 0" class="flex flex-1 flex-col items-center justify-center gap-3">
-      <div class="i-twemoji-person-shrugging text-5xl opacity-40" />
-      <div class="a-color-text-tertiary">
-        暂无好友数据
-      </div>
+    <div v-else-if="friends.length === 0" class="flex flex-1 items-center justify-center">
+      <EmptyState icon="i-twemoji-person-shrugging text-5xl" description="暂无好友数据" />
     </div>
 
     <a-card
@@ -163,11 +161,8 @@ function handleAvatarError(key: string) {
       />
 
       <div class="min-h-0 flex-1 overflow-y-auto">
-        <div v-if="filteredFriends.length === 0" class="flex flex-col items-center justify-center gap-2 py-16">
-          <div class="i-twemoji-magnifying-glass-tilted-left text-3xl opacity-30" />
-          <div class="a-color-text-tertiary">
-            未找到匹配的好友
-          </div>
+        <div v-if="filteredFriends.length === 0" class="flex items-center justify-center py-16">
+          <EmptyState icon="i-twemoji-magnifying-glass-tilted-left text-4xl" description="未找到匹配的好友" />
         </div>
 
         <div
@@ -182,6 +177,7 @@ function handleAvatarError(key: string) {
             :lands="friendLandsWithCountdown[friend.gid] || []"
             :lands-loading="!!friendLandsLoading[friend.gid]"
             :avatar-error-keys="avatarErrorKeys"
+            :disabled="!currentAccount?.running"
             @toggle="toggleFriend(friend.gid)"
             @operate="(type, e) => handleOp(friend.gid, type, e)"
             @toggle-blacklist="e => handleToggleBlacklist(friend, e)"

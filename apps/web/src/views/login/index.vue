@@ -1,18 +1,17 @@
 <script setup lang="ts">
-import { useStorage } from '@vueuse/core'
-
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { authApi } from '@/api'
 import ThemeToggle from '@/components/ThemeToggle.vue'
+import { useUserStore } from '@/stores'
 
 const router = useRouter()
+const userStore = useUserStore()
 
 const password = ref('')
 const error = ref('')
 const loading = ref(false)
 const focused = ref(false)
-const token = useStorage('admin_token', '')
 
 async function handleLogin() {
   if (!password.value) {
@@ -23,7 +22,7 @@ async function handleLogin() {
   error.value = ''
   try {
     const res = await authApi.login(password.value)
-    token.value = res.token
+    userStore.setToken(res.token)
     router.push('/')
   }
   catch (e: any) {

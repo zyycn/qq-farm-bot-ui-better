@@ -67,6 +67,8 @@ async function refresh() {
   const acc = currentAccount.value
   if (!acc || !currentAccountId.value)
     return
+  if (!acc.running)
+    return
 
   if (!realtimeConnected.value)
     await statusStore.fetchStatus(currentAccountId.value)

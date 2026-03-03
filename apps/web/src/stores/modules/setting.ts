@@ -141,4 +141,9 @@ export const useSettingStore = defineStore('setting', () => {
   }
 
   return { settings, loading, fetchSettings, saveSettings, saveOfflineConfig, changeAdminPassword }
+}, {
+  persist: {
+    pick: ['settings'],
+    storage: sessionStorage,
+  },
 })

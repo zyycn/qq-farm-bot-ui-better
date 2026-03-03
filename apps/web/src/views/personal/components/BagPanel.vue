@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
+import EmptyState from '@/components/EmptyState.vue'
 
 defineProps<{
   items: any[]
@@ -27,7 +28,9 @@ function onImageError(id: string | number) {
       <span v-if="items.length" class="text-sm a-color-text-tertiary">{{ items.length }} 种</span>
     </div>
     <div class="min-h-0 flex-1 overflow-y-auto">
-      <a-empty v-if="!items.length" description="背包空空" :image-style="{ height: '32px' }" />
+      <div v-if="!items.length" class="h-full flex items-center justify-center">
+        <EmptyState icon="i-twemoji-package text-3xl" description="背包空空" />
+      </div>
       <div v-else class="space-y-1">
         <div
           v-for="item in items"

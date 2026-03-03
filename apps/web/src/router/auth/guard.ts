@@ -1,4 +1,7 @@
 import type { Router } from 'vue-router'
+import { storeToRefs } from 'pinia'
+
+import { useUserStore } from '@/stores'
 import { ROUTE_NAMES } from '../constants'
 
 export function createAuthGuard(
@@ -6,12 +9,13 @@ export function createAuthGuard(
   deps: {
     ensureTokenValid: () => Promise<boolean>
     clearValidation: () => void
-    adminToken: { value: string }
   },
 ): void {
-  const { ensureTokenValid, clearValidation, adminToken } = deps
+  const { ensureTokenValid, clearValidation } = deps
 
   router.beforeEach(async (to) => {
+    const { adminToken } = storeToRefs(useUserStore())
+
     if (to.name === ROUTE_NAMES.LOGIN) {
       if (!adminToken.value) {
         clearValidation()

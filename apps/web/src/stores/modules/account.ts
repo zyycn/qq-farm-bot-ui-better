@@ -1,4 +1,3 @@
-import { useStorage } from '@vueuse/core'
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 import { accountApi } from '@/api'
@@ -30,7 +29,7 @@ export function getPlatformIcon(p?: string) {
 
 export const useAccountStore = defineStore('account', () => {
   const accounts = ref<Account[]>([])
-  const currentAccountId = useStorage('current_account_id', '')
+  const currentAccountId = ref('')
   const loading = ref(false)
   const logs = ref<AccountLog[]>([])
 
@@ -138,4 +137,9 @@ export const useAccountStore = defineStore('account', () => {
     updateAccount,
     setCurrentAccount,
   }
+}, {
+  persist: {
+    pick: ['currentAccountId'],
+    storage: localStorage,
+  },
 })

@@ -1,17 +1,16 @@
 <script setup lang="ts">
 import { MenuFoldOutlined, MenuOutlined, MenuUnfoldOutlined } from '@antdv-next/icons'
-import { useStorage } from '@vueuse/core'
 import { storeToRefs } from 'pinia'
 import { useRouter } from 'vue-router'
-import { useAppStore } from '@/stores'
+import { useAppStore, useUserStore } from '@/stores'
 
 const appStore = useAppStore()
+const userStore = useUserStore()
 const router = useRouter()
-const adminToken = useStorage('admin_token', '')
 const { sidebarCollapsed } = storeToRefs(appStore)
 
 function logout() {
-  adminToken.value = ''
+  userStore.clearToken()
   router.push('/login')
 }
 </script>

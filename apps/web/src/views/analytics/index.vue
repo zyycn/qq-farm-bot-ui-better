@@ -3,6 +3,7 @@ import { useResizeObserver } from '@vueuse/core'
 import { storeToRefs } from 'pinia'
 import { computed, ref, watch } from 'vue'
 import { analyticsApi } from '@/api'
+import EmptyState from '@/components/EmptyState.vue'
 import { useAccountRefresh } from '@/composables/useAccountRefresh'
 import { useAccountStore } from '@/stores'
 import CropTable from './components/CropTable.vue'
@@ -88,11 +89,8 @@ watch(sortKey, loadAnalytics)
       数据分析
     </div>
 
-    <div v-if="!hasAccount" class="flex flex-1 flex-col items-center justify-center gap-3">
-      <div class="i-twemoji-bar-chart text-5xl opacity-30" />
-      <div class="a-color-text-tertiary">
-        请先在侧边栏选择账号
-      </div>
+    <div v-if="!hasAccount" class="flex flex-1 items-center justify-center">
+      <EmptyState icon="i-twemoji-bar-chart text-5xl" description="请先在侧边栏选择账号" />
     </div>
 
     <a-card

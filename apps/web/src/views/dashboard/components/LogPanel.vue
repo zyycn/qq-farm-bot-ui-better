@@ -2,6 +2,7 @@
 import type { SelectValue } from 'antdv-next'
 import { SearchOutlined } from '@antdv-next/icons'
 import { nextTick, onMounted, ref, watch } from 'vue'
+import EmptyState from '@/components/EmptyState.vue'
 import { EVENTS, LOG_LEVELS, MODULES } from '../constants'
 
 const props = defineProps<{
@@ -145,8 +146,10 @@ onMounted(() => {
       class="max-h-[50vh] min-h-0 flex-1 overflow-y-auto rounded-lg p-3 leading-relaxed font-mono a-bg-fill-tertiary md:max-h-none"
       @scroll="onLogScroll"
     >
-      <a-empty v-if="!logs.length" description="暂无日志" />
-      <div v-for="log in logs" :key="log.ts + log.msg" class="mb-1 break-all text-xs">
+      <div v-if="!logs.length" class="h-full flex items-center justify-center">
+        <EmptyState icon="i-twemoji-scroll text-4xl" description="暂无日志" />
+      </div>
+      <div v-for="log in logs" v-else :key="log.ts + log.msg" class="mb-1 break-all text-xs">
         <span class="mr-2 select-none a-color-text-tertiary">[{{ formatLogTime(log.time) }}]</span>
         <a-tag :color="log.tag === '错误' ? 'red' : log.tag === '警告' ? 'orange' : 'green'" size="small" class="mr-1">
           {{ log.tag }}

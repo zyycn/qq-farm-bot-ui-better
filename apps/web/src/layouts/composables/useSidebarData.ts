@@ -56,10 +56,10 @@ export function useSidebarData() {
   async function refreshStatusFallback() {
     if (realtimeConnected.value)
       return
-    const accountRef = currentAccount.value?.id || currentAccount.value?.uin
-    if (accountRef) {
+    const acc = currentAccount.value
+    const accountRef = acc?.id || acc?.uin
+    if (accountRef)
       await statusStore.fetchStatus(String(accountRef))
-    }
   }
 
   async function handleAccountSaved() {

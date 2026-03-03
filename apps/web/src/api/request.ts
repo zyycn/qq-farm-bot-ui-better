@@ -1,10 +1,7 @@
 import type { AxiosRequestConfig } from 'axios'
-import { useStorage } from '@vueuse/core'
 import axios from 'axios'
+import { useAccountStore, useUserStore } from '@/stores'
 import notify from '@/utils/notify'
-
-const tokenRef = useStorage('admin_token', '')
-const accountIdRef = useStorage('current_account_id', '')
 
 const IGNORABLE_ERRORS = ['账号未运行', 'API Timeout'] as const
 
@@ -20,10 +17,12 @@ const api = axios.create({
 })
 
 api.interceptors.request.use((config) => {
-  if (tokenRef.value)
-    config.headers.Authorization = `Bearer ${tokenRef.value}`
-  if (accountIdRef.value)
-    config.headers['x-account-id'] = accountIdRef.value
+  const token = useUserStore().adminToken
+  const accountId = useAccountStore().currentAccountId
+  if (token)
+    config.headers.Authorization = `Bearer ${token}`
+  if (accountId)
+    config.headers['x-account-id'] = accountId
   return config
 }, error => Promise.reject(error))
 
@@ -82,7 +81,7 @@ api.interceptors.response.use(
 function handleUnauthorized() {
   if (window.location.pathname.includes('/login'))
     return
-  tokenRef.value = ''
+  useUserStore().clearToken()
   window.location.href = '/login'
   notify.warning('登录已过期，请重新登录')
 }

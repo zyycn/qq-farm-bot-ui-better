@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import EmptyState from '@/components/EmptyState.vue'
+
 defineProps<{
   growth: { doneToday?: boolean, completedCount?: number, totalCount?: number, tasks?: any[] } | null
 }>()
@@ -27,7 +29,7 @@ function formatTaskProgress(task: any) {
         {{ growth.doneToday ? '已完成' : `${growth.completedCount}/${growth.totalCount}` }}
       </a-tag>
     </div>
-    <a-empty v-if="!growth?.tasks?.length" description="暂无任务" :image-style="{ height: '32px' }" />
+    <EmptyState v-if="!growth?.tasks?.length" icon="i-twemoji-clipboard text-3xl" description="暂无任务" />
     <div v-else class="space-y-1">
       <div
         v-for="(task, idx) in growth.tasks"

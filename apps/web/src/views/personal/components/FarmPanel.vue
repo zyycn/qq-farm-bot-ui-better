@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import EmptyState from '@/components/EmptyState.vue'
 import LandCard from '@/components/LandCard.vue'
 
 defineProps<{
@@ -76,16 +77,8 @@ function handleOperate(opType: string) {
         v-if="!connected || !lands || lands.length === 0"
         class="min-h-0 flex flex-1 items-center justify-center"
       >
-        <a-empty
-          v-if="!connected"
-          description="账号未连接"
-          :image-style="{ height: '32px' }"
-        />
-        <a-empty
-          v-else
-          description="暂无土地数据"
-          :image-style="{ height: '32px' }"
-        />
+        <EmptyState v-if="!connected" icon="i-twemoji-satellite-antenna text-4xl" description="账号未连接" />
+        <EmptyState v-else icon="i-twemoji-seedling text-4xl" description="暂无土地数据" />
       </div>
       <div v-else class="grid grid-cols-3 gap-2.5 lg:grid-cols-4 xl:grid-cols-5">
         <LandCard v-for="land in lands" :key="land.id" :land="land" />

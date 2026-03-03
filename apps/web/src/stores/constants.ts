@@ -1,6 +1,3 @@
-export const THEME_KEY = 'ui_theme'
-export const SIDEBAR_COLLAPSED_KEY = 'sidebar_collapsed'
-
 export const BAG_ERROR_COOLDOWN_MS = 15_000
 export const BAG_HIDDEN_ITEM_IDS = new Set([1, 1001, 1002, 1101, 1011, 1012, 3001, 3002])
 export const BAG_DASHBOARD_ITEM_IDS = new Set([1011, 1012, 3001, 3002])

@@ -166,24 +166,25 @@ async function refreshBag(force = false) {
 }
 
 async function refresh(forceReloadLogs = false) {
-  if (currentAccountId.value) {
-    const acc = currentAccount.value
-    if (!acc)
-      return
-    if (!realtimeConnected.value) {
-      await statusStore.fetchStatus(currentAccountId.value)
-      await statusStore.fetchAccountLogs()
-    }
-    if (forceReloadLogs || hasActiveLogFilter.value || !realtimeConnected.value) {
-      await statusStore.fetchLogs(currentAccountId.value, {
-        module: filter.module || undefined,
-        event: filter.event || undefined,
-        keyword: filter.keyword || undefined,
-        isWarn: filter.isWarn === 'warn' ? true : filter.isWarn === 'info' ? false : undefined,
-      })
-    }
-    await refreshBag()
+  if (!currentAccountId.value)
+    return
+  const acc = currentAccount.value
+  if (!acc)
+    return
+  if (!realtimeConnected.value) {
+    await statusStore.fetchStatus(currentAccountId.value)
+    await statusStore.fetchAccountLogs()
   }
+  // 日志：仅账号运行中时才请求
+  if (acc.running && (forceReloadLogs || hasActiveLogFilter.value || !realtimeConnected.value)) {
+    await statusStore.fetchLogs(currentAccountId.value, {
+      module: filter.module || undefined,
+      event: filter.event || undefined,
+      keyword: filter.keyword || undefined,
+      isWarn: filter.isWarn === 'warn' ? true : filter.isWarn === 'info' ? false : undefined,
+    })
+  }
+  await refreshBag()
 }
 
 function onLogFilterChange() {

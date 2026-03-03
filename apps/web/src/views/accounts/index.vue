@@ -5,6 +5,7 @@ import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import AccountModal from '@/components/AccountModal.vue'
 import ConfirmModal from '@/components/ConfirmModal.vue'
+import EmptyState from '@/components/EmptyState.vue'
 import QqAvatar from '@/components/QqAvatar.vue'
 import { useAccountStore } from '@/stores'
 
@@ -80,7 +81,7 @@ function getDisplayName(acc: any) {
 </script>
 
 <template>
-  <div class="flex flex-col gap-3">
+  <div class="h-full flex flex-col gap-3">
     <!-- Header -->
     <div class="flex items-center justify-between">
       <div class="flex items-center gap-2 font-bold a-color-text">
@@ -93,16 +94,10 @@ function getDisplayName(acc: any) {
       </a-button>
     </div>
 
-    <div v-if="accounts.length === 0" class="flex flex-1 flex-col items-center justify-center gap-4">
-      <div class="i-twemoji-bust-in-silhouette text-6xl opacity-20" />
-      <div class="text-center">
-        <div class="font-medium a-color-text-secondary">
-          暂无账号
-        </div>
-        <div class="mt-1 text-sm a-color-text-tertiary">
-          添加一个账号开始自动化管理农场
-        </div>
-      </div>
+    <div v-if="accounts.length === 0" class="flex flex-1 items-center justify-center">
+      <EmptyState icon="i-twemoji-bust-in-silhouette text-5xl" description="暂无账号">
+        <span class="text-sm a-color-text-tertiary">添加一个账号开始自动化管理农场</span>
+      </EmptyState>
     </div>
 
     <!-- Account Cards -->

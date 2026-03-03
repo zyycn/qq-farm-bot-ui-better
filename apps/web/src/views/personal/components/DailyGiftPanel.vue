@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import EmptyState from '@/components/EmptyState.vue'
+
 defineProps<{
   gifts: any[]
 }>()
@@ -36,7 +38,7 @@ function getGiftStatus(gift: any) {
       <div class="i-twemoji-wrapped-gift" />
       每日礼包
     </div>
-    <a-empty v-if="!gifts.length" description="暂无数据" :image-style="{ height: '32px' }" />
+    <EmptyState v-if="!gifts.length" icon="i-twemoji-wrapped-gift text-3xl" description="暂无数据" />
     <div v-else class="grid grid-cols-2 gap-1.5">
       <div
         v-for="gift in gifts"

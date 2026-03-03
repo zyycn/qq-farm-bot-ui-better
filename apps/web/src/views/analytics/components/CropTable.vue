@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
+import EmptyState from '@/components/EmptyState.vue'
 import { COLUMNS, HIGHLIGHT_COLOR_MAP } from '../constants'
 
 const props = defineProps<{
@@ -153,10 +154,11 @@ function getHighlightColor(key: string): string {
       </template>
 
       <template #emptyText>
-        <div class="flex flex-col items-center gap-2 py-8">
-          <div class="i-twemoji-bar-chart text-3xl opacity-30" />
-          <span class="a-color-text-tertiary">{{ searchQuery ? '未找到匹配的作物' : '暂无数据' }}</span>
-        </div>
+        <EmptyState
+          icon="i-twemoji-bar-chart text-4xl"
+          :description="searchQuery ? '未找到匹配的作物' : '暂无数据'"
+          class="py-4"
+        />
       </template>
     </a-table>
 
