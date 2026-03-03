@@ -1,26 +1,22 @@
+import type { DrizzleDB } from '../database/drizzle.provider'
+import type { AccountConfigSnapshot, AutomationConfig, FertilizerMode, FriendQuietHoursConfig, IntervalsConfig, OfflineReminderConfig, PlantingStrategy } from '../game/constants'
 import { Inject, Injectable, Logger } from '@nestjs/common'
 import { and, eq } from 'drizzle-orm'
-import { DRIZZLE_TOKEN  } from '../database/drizzle.provider'
-import type {DrizzleDB} from '../database/drizzle.provider';
+import { DRIZZLE_TOKEN } from '../database/drizzle.provider'
 import * as schema from '../database/schema'
 import {
-  
+
   ALLOWED_AUTOMATION_KEYS,
   ALLOWED_FERTILIZER_MODES,
   ALLOWED_PLANTING_STRATEGIES,
-  
+
   DEFAULT_ACCOUNT_CONFIG,
   DEFAULT_AUTOMATION,
   DEFAULT_FRIEND_QUIET_HOURS,
   DEFAULT_OFFLINE_REMINDER,
-  
-  
-  
-  
-  
+
   PUSHOO_CHANNELS
 } from '../game/constants'
-import type {AccountConfigSnapshot, AutomationConfig, FertilizerMode, FriendQuietHoursConfig, IntervalsConfig, OfflineReminderConfig, PlantingStrategy} from '../game/constants';
 import { normalizeTimeString } from '../game/utils'
 
 @Injectable()
@@ -40,8 +36,7 @@ export class StoreService {
     const existing = this.db.select().from(schema.globalConfig).where(eq(schema.globalConfig.key, key)).get()
     if (existing) {
       this.db.update(schema.globalConfig).set({ value }).where(eq(schema.globalConfig.key, key)).run()
-    }
-    else {
+    } else {
       this.db.insert(schema.globalConfig).values({ key, value }).run()
     }
   }
@@ -98,7 +93,7 @@ export class StoreService {
       token: src.token != null ? String(src.token).trim() : DEFAULT_OFFLINE_REMINDER.token,
       title: src.title != null ? String(src.title).trim() : DEFAULT_OFFLINE_REMINDER.title,
       msg: src.msg != null ? String(src.msg).trim() : DEFAULT_OFFLINE_REMINDER.msg,
-      offlineDeleteSec,
+      offlineDeleteSec
     }
   }
 
@@ -123,10 +118,12 @@ export class StoreService {
     const friend = toSec(src.friend, 10)
     let farmMin = toSec(src.farmMin, farm)
     let farmMax = toSec(src.farmMax, farm)
-    if (farmMin > farmMax) [farmMin, farmMax] = [farmMax, farmMin]
+    if (farmMin > farmMax)
+      [farmMin, farmMax] = [farmMax, farmMin]
     let friendMin = toSec(src.friendMin, friend)
     let friendMax = toSec(src.friendMax, friend)
-    if (friendMin > friendMax) [friendMin, friendMax] = [friendMax, friendMin]
+    if (friendMin > friendMax)
+      [friendMin, friendMax] = [friendMax, friendMin]
     return { farm, friend, farmMin, farmMax, friendMin, friendMax }
   }
 
@@ -135,7 +132,8 @@ export class StoreService {
     const srcAutomation = (b.automation && typeof b.automation === 'object') ? b.automation : {} as Partial<AutomationConfig>
     const automation = { ...DEFAULT_AUTOMATION }
     for (const key of Object.keys(automation) as (keyof AutomationConfig)[]) {
-      if ((srcAutomation as any)[key] !== undefined) (automation as any)[key] = (srcAutomation as any)[key]
+      if ((srcAutomation as any)[key] !== undefined)
+        (automation as any)[key] = (srcAutomation as any)[key]
     }
     const rawBlacklist = Array.isArray(b.friendBlacklist) ? b.friendBlacklist : []
     const rawStealBlacklist = Array.isArray(b.stealCropBlacklist) ? b.stealCropBlacklist : []
@@ -148,7 +146,7 @@ export class StoreService {
       intervals: this.normalizeIntervals(b.intervals),
       friendQuietHours: { ...(b.friendQuietHours || DEFAULT_FRIEND_QUIET_HOURS) },
       friendBlacklist: rawBlacklist.map(Number).filter(n => Number.isFinite(n) && n > 0),
-      stealCropBlacklist: rawStealBlacklist.map(Number).filter(n => Number.isFinite(n) && n >= 0),
+      stealCropBlacklist: rawStealBlacklist.map(Number).filter(n => Number.isFinite(n) && n >= 0)
     }
   }
 
@@ -158,11 +156,11 @@ export class StoreService {
 
     if (src.automation && typeof src.automation === 'object') {
       for (const [k, v] of Object.entries(src.automation)) {
-        if (!ALLOWED_AUTOMATION_KEYS.has(k)) continue
+        if (!ALLOWED_AUTOMATION_KEYS.has(k))
+          continue
         if (k === 'fertilizer') {
           cfg.automation.fertilizer = ALLOWED_FERTILIZER_MODES.includes(v as FertilizerMode) ? (v as FertilizerMode) : cfg.automation.fertilizer
-        }
-        else {
+        } else {
           (cfg.automation as any)[k] = !!v
         }
       }
@@ -176,7 +174,9 @@ export class StoreService {
 
     if (src.intervals && typeof src.intervals === 'object') {
       for (const [type, sec] of Object.entries(src.intervals)) {
-        if ((cfg.intervals as any)[type] === undefined) continue
+        if ((cfg.intervals as any)[type] === undefined) {
+          continue
+        }
         ;(cfg.intervals as any)[type] = Math.max(1, Number.parseInt(String(sec), 10) || (cfg.intervals as any)[type] || 1)
       }
       cfg.intervals = this.normalizeIntervals(cfg.intervals)
@@ -187,7 +187,7 @@ export class StoreService {
       cfg.friendQuietHours = {
         enabled: src.friendQuietHours.enabled !== undefined ? !!src.friendQuietHours.enabled : old.enabled,
         start: normalizeTimeString(src.friendQuietHours.start, old.start || '23:00'),
-        end: normalizeTimeString(src.friendQuietHours.end, old.end || '07:00'),
+        end: normalizeTimeString(src.friendQuietHours.end, old.end || '07:00')
       }
     }
 
@@ -213,10 +213,12 @@ export class StoreService {
 
   getAccountConfig(accountId: string): AccountConfigSnapshot {
     const fallback = this.getDefaultAccountConfig()
-    if (!accountId) return this.cloneAccountConfig(fallback)
+    if (!accountId)
+      return this.cloneAccountConfig(fallback)
 
     const row = this.db.select().from(schema.accountConfigs).where(eq(schema.accountConfigs.accountId, accountId)).get()
-    if (!row) return this.normalizeAccountConfig({}, fallback)
+    if (!row)
+      return this.normalizeAccountConfig({}, fallback)
 
     return this.normalizeAccountConfig({
       automation: row.automation as any,
@@ -225,7 +227,7 @@ export class StoreService {
       intervals: row.intervals as any,
       friendQuietHours: row.friendQuietHours as any,
       friendBlacklist: row.friendBlacklist as any,
-      stealCropBlacklist: row.stealCropBlacklist as any,
+      stealCropBlacklist: row.stealCropBlacklist as any
     }, fallback)
   }
 
@@ -249,13 +251,12 @@ export class StoreService {
       intervals: merged.intervals as any,
       friendQuietHours: merged.friendQuietHours as any,
       friendBlacklist: merged.friendBlacklist as any,
-      stealCropBlacklist: merged.stealCropBlacklist as any,
+      stealCropBlacklist: merged.stealCropBlacklist as any
     }
 
     if (existing) {
       this.db.update(schema.accountConfigs).set(data).where(eq(schema.accountConfigs.accountId, accountId)).run()
-    }
-    else {
+    } else {
       this.db.insert(schema.accountConfigs).values({ accountId, ...data }).run()
     }
 
@@ -263,12 +264,14 @@ export class StoreService {
   }
 
   removeAccountConfig(accountId: string): void {
-    if (!accountId) return
+    if (!accountId)
+      return
     this.db.delete(schema.accountConfigs).where(eq(schema.accountConfigs.accountId, accountId)).run()
   }
 
   ensureAccountConfig(accountId: string): AccountConfigSnapshot | null {
-    if (!accountId) return null
+    if (!accountId)
+      return null
     const existing = this.db.select().from(schema.accountConfigs).where(eq(schema.accountConfigs.accountId, accountId)).get()
     if (existing) {
       return this.getAccountConfig(accountId)
@@ -285,7 +288,7 @@ export class StoreService {
       intervals: cfg.intervals as any,
       friendQuietHours: cfg.friendQuietHours as any,
       friendBlacklist: cfg.friendBlacklist as any,
-      stealCropBlacklist: cfg.stealCropBlacklist as any,
+      stealCropBlacklist: cfg.stealCropBlacklist as any
     }).run()
 
     return this.cloneAccountConfig(cfg)
@@ -352,7 +355,7 @@ export class StoreService {
       friendQuietHours: { ...cfg.friendQuietHours },
       friendBlacklist: [...(cfg.friendBlacklist || [])],
       stealCropBlacklist: [...(cfg.stealCropBlacklist || [])],
-      ui: this.getUI(),
+      ui: this.getUI()
     }
   }
 
@@ -361,7 +364,8 @@ export class StoreService {
 
     if (cfg.ui && typeof cfg.ui === 'object') {
       const theme = String(cfg.ui.theme || '').trim()
-      if (theme) this.setUITheme(theme)
+      if (theme)
+        this.setUITheme(theme)
     }
 
     return this.setAccountConfig(accountId, cfg)
@@ -383,9 +387,7 @@ export class StoreService {
       const uin = String(acc.uin).trim()
       const platform = String(acc.platform || 'qq').trim()
       if (uin && platform === 'qq') {
-        const existingByUin = this.db.select().from(schema.accounts)
-          .where(and(eq(schema.accounts.uin, uin), eq(schema.accounts.platform, platform)))
-          .get()
+        const existingByUin = this.db.select().from(schema.accounts).where(and(eq(schema.accounts.uin, uin), eq(schema.accounts.platform, platform))).get()
         if (existingByUin) {
           acc.id = existingByUin.id
           dedupByUin = true
@@ -407,7 +409,7 @@ export class StoreService {
           qq: acc.qq !== undefined ? String(acc.qq) : existing.qq,
           avatar: acc.avatar || acc.avatarUrl || existing.avatar,
           nick: acc.nick !== undefined ? acc.nick : existing.nick,
-          updatedAt: Date.now(),
+          updatedAt: Date.now()
         }).where(eq(schema.accounts.id, String(acc.id))).run()
         this.ensureAccountConfig(String(acc.id))
         return this.getAccounts()
@@ -426,7 +428,7 @@ export class StoreService {
       avatar: acc.avatar || acc.avatarUrl || '',
       nick: acc.nick || '',
       createdAt: Date.now(),
-      updatedAt: Date.now(),
+      updatedAt: Date.now()
     }).run()
     this.ensureAccountConfig(id)
     return this.getAccounts()
@@ -444,7 +446,8 @@ export class StoreService {
 
   getAccountById(id: string | number): any | null {
     const sid = String(id ?? '').trim()
-    if (!sid) return null
+    if (!sid)
+      return null
     return this.db.select().from(schema.accounts).where(eq(schema.accounts.id, sid)).get() || null
   }
 

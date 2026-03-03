@@ -1,10 +1,10 @@
+import type { ProtoService } from './proto.service'
 import { Buffer } from 'node:buffer'
 import { EventEmitter } from 'node:events'
 import { Logger } from '@nestjs/common'
 import WebSocket from 'ws'
-import { ProtoService } from './proto.service'
-import { Scheduler } from './scheduler'
 import { CLIENT_VERSION, GAME_SERVER_URL, HEARTBEAT_INTERVAL_MS } from './constants'
+import { Scheduler } from './scheduler'
 import { syncServerTime, toLong, toNum } from './utils'
 
 export interface UserState {
@@ -43,7 +43,7 @@ export class GameClient extends EventEmitter {
 
   constructor(
     private readonly accountId: string,
-    private readonly proto: ProtoService,
+    private readonly proto: ProtoService
   ) {
     super()
     this.logger = new Logger(`GameClient:${accountId}`)
@@ -68,9 +68,9 @@ export class GameClient extends EventEmitter {
         method_name: methodName,
         message_type: 1,
         client_seq: toLong(this.clientSeq),
-        server_seq: toLong(this.serverSeq),
+        server_seq: toLong(this.serverSeq)
       },
-      body: bodyBytes || Buffer.alloc(0),
+      body: bodyBytes || Buffer.alloc(0)
     })
     const encoded = t.GateMessage.encode(msg).finish()
     this.clientSeq++
@@ -78,10 +78,12 @@ export class GameClient extends EventEmitter {
   }
 
   sendMsg(serviceName: string, methodName: string, bodyBytes: Buffer, callback?: MessageCallback): boolean {
-    if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return false
+    if (!this.ws || this.ws.readyState !== WebSocket.OPEN)
+      return false
     const seq = this.clientSeq
     const encoded = this.encodeMsg(serviceName, methodName, bodyBytes)
-    if (callback) this.pendingCallbacks.set(seq, callback)
+    if (callback)
+      this.pendingCallbacks.set(seq, callback)
     this.ws.send(encoded)
     return true
   }
@@ -100,7 +102,8 @@ export class GameClient extends EventEmitter {
       })
       const sent = this.sendMsg(serviceName, methodName, bodyBytes, (err, body, meta) => {
         this.scheduler.clear(timeoutKey)
-        if (err) reject(err)
+        if (err)
+          reject(err)
         else resolve({ body: body!, meta })
       })
       if (!sent) {
@@ -117,11 +120,13 @@ export class GameClient extends EventEmitter {
       const t = this.proto.types
       const msg: any = t.GateMessage.decode(data)
       const meta = msg.meta
-      if (!meta) return
+      if (!meta)
+        return
 
       if (meta.server_seq) {
         const seq = toNum(meta.server_seq)
-        if (seq > this.serverSeq) this.serverSeq = seq
+        if (seq > this.serverSeq)
+          this.serverSeq = seq
       }
 
       if (meta.message_type === 3) {
@@ -144,14 +149,14 @@ export class GameClient extends EventEmitter {
         if (errorCode !== 0)
           this.logger.warn(`${meta.service_name}.${meta.method_name} code=${errorCode} ${meta.error_message || ''}`)
       }
-    }
-    catch (err: any) {
+    } catch (err: any) {
       this.logger.warn(`消息解码失败: ${err?.message}`)
     }
   }
 
   private handleNotify(msg: any) {
-    if (!msg.body || msg.body.length === 0) return
+    if (!msg.body || msg.body.length === 0)
+      return
     try {
       const t = this.proto.types
       const event: any = t.EventMessage.decode(msg.body)
@@ -164,8 +169,7 @@ export class GameClient extends EventEmitter {
           const reason = notify.reason_message || '未知'
           this.logger.warn(`被踢下线: ${reason}`)
           this.emit('kickout', { type, reason })
-        }
-        catch { this.emit('kickout', { type, reason: '未知' }) }
+        } catch { this.emit('kickout', { type, reason: '未知' }) }
         return
       }
 
@@ -176,8 +180,7 @@ export class GameClient extends EventEmitter {
           const lands = notify.lands || []
           if (lands.length > 0 && (hostGid === this.userState.gid || hostGid === 0))
             this.emit('landsChanged', lands)
-        }
-        catch {}
+        } catch {}
         return
       }
 
@@ -187,28 +190,32 @@ export class GameClient extends EventEmitter {
           const items = notify.items || []
           for (const itemChg of items) {
             const item = itemChg.item
-            if (!item) continue
+            if (!item)
+              continue
             const id = toNum(item.id)
             const count = toNum(item.count)
             const delta = toNum(itemChg.delta)
 
             if (id === 1101) {
-              if (count > 0) this.userState.exp = count
-              else if (delta !== 0) this.userState.exp = Math.max(0, (this.userState.exp || 0) + delta)
+              if (count > 0)
+                this.userState.exp = count
+              else if (delta !== 0)
+                this.userState.exp = Math.max(0, (this.userState.exp || 0) + delta)
               this.emit('expChanged', this.userState.level, this.userState.exp)
-            }
-            else if (id === 1 || id === 1001) {
-              if (count > 0) this.userState.gold = count
-              else if (delta !== 0) this.userState.gold = Math.max(0, (this.userState.gold || 0) + delta)
+            } else if (id === 1 || id === 1001) {
+              if (count > 0)
+                this.userState.gold = count
+              else if (delta !== 0)
+                this.userState.gold = Math.max(0, (this.userState.gold || 0) + delta)
               this.emit('goldChanged', this.userState.gold)
-            }
-            else if (id === 1002) {
-              if (count > 0) this.userState.coupon = count
-              else if (delta !== 0) this.userState.coupon = Math.max(0, (this.userState.coupon || 0) + delta)
+            } else if (id === 1002) {
+              if (count > 0)
+                this.userState.coupon = count
+              else if (delta !== 0)
+                this.userState.coupon = Math.max(0, (this.userState.coupon || 0) + delta)
             }
           }
-        }
-        catch {}
+        } catch {}
         return
       }
 
@@ -219,7 +226,8 @@ export class GameClient extends EventEmitter {
             const oldLevel = this.userState.level
             if (Object.prototype.hasOwnProperty.call(notify.basic, 'level')) {
               const next = toNum(notify.basic.level)
-              if (Number.isFinite(next) && next > 0) this.userState.level = next
+              if (Number.isFinite(next) && next > 0)
+                this.userState.level = next
             }
             if (Object.prototype.hasOwnProperty.call(notify.basic, 'gold')) {
               const next = toNum(notify.basic.gold)
@@ -238,8 +246,7 @@ export class GameClient extends EventEmitter {
             if (this.userState.level !== oldLevel)
               this.emit('levelUp', oldLevel, this.userState.level)
           }
-        }
-        catch {}
+        } catch {}
         return
       }
 
@@ -248,8 +255,7 @@ export class GameClient extends EventEmitter {
           const notify: any = t.FriendApplicationReceivedNotify.decode(eventBody)
           if (notify.applications?.length)
             this.emit('friendApplicationReceived', notify.applications)
-        }
-        catch {}
+        } catch {}
         return
       }
 
@@ -260,8 +266,7 @@ export class GameClient extends EventEmitter {
             const names = notify.friends.map((f: any) => f.name || f.remark || `GID:${toNum(f.gid)}`).join(', ')
             this.logger.log(`新好友: ${names}`)
           }
-        }
-        catch {}
+        } catch {}
         return
       }
 
@@ -270,8 +275,7 @@ export class GameClient extends EventEmitter {
           const notify: any = t.GoodsUnlockNotify.decode(eventBody)
           if (notify.goods_list?.length)
             this.emit('goodsUnlockNotify', notify.goods_list)
-        }
-        catch {}
+        } catch {}
         return
       }
 
@@ -280,11 +284,9 @@ export class GameClient extends EventEmitter {
           const notify: any = t.TaskInfoNotify.decode(eventBody)
           if (notify.task_info)
             this.emit('taskInfoNotify', notify.task_info)
-        }
-        catch {}
+        } catch {}
       }
-    }
-    catch (e: any) {
+    } catch (e: any) {
       this.logger.warn(`推送解码失败: ${e?.message}`)
     }
   }
@@ -302,14 +304,20 @@ export class GameClient extends EventEmitter {
           sys_software: 'iOS 26.2.1',
           network: 'wifi',
           memory: '7672',
-          device_id: 'iPhone X<iPhone18,3>',
+          device_id: 'iPhone X<iPhone18,3>'
         },
         share_cfg_id: toLong(0),
         scene_id: '1256',
         report_data: {
-          callback: '', cd_extend_info: '', click_id: '', clue_token: '',
-          minigame_channel: 'other', minigame_platid: 2, req_id: '', trackid: '',
-        },
+          callback: '',
+          cd_extend_info: '',
+          click_id: '',
+          clue_token: '',
+          minigame_channel: 'other',
+          minigame_platid: 2,
+          req_id: '',
+          trackid: ''
+        }
       })).finish())
 
       this.sendMsg('gamepb.userpb.UserService', 'Login', body, (err, bodyBytes) => {
@@ -336,12 +344,10 @@ export class GameClient extends EventEmitter {
             this.startHeartbeat()
             this.emit('login', this.userState)
             resolve()
-          }
-          else {
+          } else {
             reject(new Error('登录响应无 basic 字段'))
           }
-        }
-        catch (e: any) {
+        } catch (e: any) {
           reject(new Error(`登录解码失败: ${e?.message}`))
         }
       })
@@ -357,14 +363,17 @@ export class GameClient extends EventEmitter {
     const t = this.proto.types
 
     this.scheduler.setIntervalTask('heartbeat_interval', HEARTBEAT_INTERVAL_MS, () => {
-      if (!this.userState.gid) return
+      if (!this.userState.gid)
+        return
       const timeSince = Date.now() - this.lastHeartbeatResponse
       if (timeSince > 60000) {
         this.heartbeatMissCount++
         this.logger.warn(`连接可能已断开 (${Math.round(timeSince / 1000)}s 无响应)`)
         if (this.heartbeatMissCount >= 2) {
           this.pendingCallbacks.forEach((cb) => {
-            try { cb(new Error('连接超时，已清理')) } catch {}
+            try {
+              cb(new Error('连接超时，已清理'))
+            } catch {}
           })
           this.pendingCallbacks.clear()
         }
@@ -372,18 +381,19 @@ export class GameClient extends EventEmitter {
 
       const body = Buffer.from(t.HeartbeatRequest.encode(t.HeartbeatRequest.create({
         gid: toLong(this.userState.gid),
-        client_version: CLIENT_VERSION,
+        client_version: CLIENT_VERSION
       })).finish())
 
       this.sendMsg('gamepb.userpb.UserService', 'Heartbeat', body, (err, replyBody) => {
-        if (err || !replyBody) return
+        if (err || !replyBody)
+          return
         this.lastHeartbeatResponse = Date.now()
         this.heartbeatMissCount = 0
         try {
           const reply: any = t.HeartbeatReply.decode(replyBody)
-          if (reply.server_time) syncServerTime(toNum(reply.server_time))
-        }
-        catch {}
+          if (reply.server_time)
+            syncServerTime(toNum(reply.server_time))
+        } catch {}
       })
     })
   }
@@ -391,7 +401,8 @@ export class GameClient extends EventEmitter {
   // ========== Connect ==========
 
   connect(code: string, platform = 'qq'): Promise<void> {
-    if (this._destroyed) return Promise.reject(new Error('GameClient已销毁'))
+    if (this._destroyed)
+      return Promise.reject(new Error('GameClient已销毁'))
     this.savedCode = code
     this.platform = platform
     const url = `${GAME_SERVER_URL}?platform=${platform}&os=iOS&ver=${CLIENT_VERSION}&code=${code}&openID=`
@@ -400,8 +411,8 @@ export class GameClient extends EventEmitter {
       this.ws = new WebSocket(url, {
         headers: {
           'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36 MicroMessenger/7.0.20.1781(0x6700143B) NetType/WIFI MiniProgramEnv/Windows WindowsWechat/WMPF WindowsWechat(0x63090a13)',
-          'Origin': 'https://gate-obt.nqf.qq.com',
-        },
+          'Origin': 'https://gate-obt.nqf.qq.com'
+        }
       })
       this.ws.binaryType = 'arraybuffer'
 
@@ -471,7 +482,9 @@ export class GameClient extends EventEmitter {
     this.cleanup()
     if (this.ws) {
       this.ws.removeAllListeners()
-      try { this.ws.close() } catch {}
+      try {
+        this.ws.close()
+      } catch {}
       this.ws = null
     }
     this.removeAllListeners()

@@ -11,6 +11,8 @@
     "dev:web": "turbo run dev -F=web",
     "start": "turbo run start -F=core",
     "lint": "turbo run lint",
+    "lint:web": "turbo run lint -F=web",
+    "lint:core": "turbo run lint -F=core",
     "package:win": "pnpm build && turbo run build:win -F=core",
     "package:linux": "pnpm build && turbo run build:linux -F=core",
     "package:mac": "pnpm build && turbo run build:mac -F=core",

@@ -14,13 +14,18 @@ export enum PlantPhase {
   LARGE_LEAVES = 4,
   BLOOMING = 5,
   MATURE = 6,
-  DEAD = 7,
+  DEAD = 7
 }
 
 export const PHASE_NAMES = ['未知', '种子', '发芽', '小叶', '大叶', '开花', '成熟', '枯死'] as const
 
 export const ALLOWED_PLANTING_STRATEGIES = [
-  'preferred', 'level', 'max_exp', 'max_fert_exp', 'max_profit', 'max_fert_profit',
+  'preferred',
+  'level',
+  'max_exp',
+  'max_fert_exp',
+  'max_profit',
+  'max_fert_profit'
 ] as const
 export type PlantingStrategy = typeof ALLOWED_PLANTING_STRATEGIES[number]
 
@@ -28,10 +33,25 @@ export const ALLOWED_FERTILIZER_MODES = ['both', 'normal', 'organic', 'none'] as
 export type FertilizerMode = typeof ALLOWED_FERTILIZER_MODES[number]
 
 export const PUSHOO_CHANNELS = new Set([
-  'webhook', 'qmsg', 'serverchan', 'pushplus', 'pushplushxtrip',
-  'dingtalk', 'wecom', 'bark', 'gocqhttp', 'onebot', 'atri',
-  'pushdeer', 'igot', 'telegram', 'feishu', 'ifttt', 'wecombot',
-  'discord', 'wxpusher',
+  'webhook',
+  'qmsg',
+  'serverchan',
+  'pushplus',
+  'pushplushxtrip',
+  'dingtalk',
+  'wecom',
+  'bark',
+  'gocqhttp',
+  'onebot',
+  'atri',
+  'pushdeer',
+  'igot',
+  'telegram',
+  'feishu',
+  'ifttt',
+  'wecombot',
+  'discord',
+  'wxpusher'
 ])
 
 export interface AutomationConfig {
@@ -75,7 +95,7 @@ export const DEFAULT_AUTOMATION: AutomationConfig = {
   month_card: true,
   open_server_gift: true,
   sell: true,
-  fertilizer: 'none',
+  fertilizer: 'none'
 }
 
 export const ALLOWED_AUTOMATION_KEYS = new Set(Object.keys(DEFAULT_AUTOMATION))
@@ -95,7 +115,7 @@ export const DEFAULT_INTERVALS: IntervalsConfig = {
   farmMin: 2,
   farmMax: 2,
   friendMin: 10,
-  friendMax: 10,
+  friendMax: 10
 }
 
 export interface FriendQuietHoursConfig {
@@ -107,7 +127,7 @@ export interface FriendQuietHoursConfig {
 export const DEFAULT_FRIEND_QUIET_HOURS: FriendQuietHoursConfig = {
   enabled: false,
   start: '23:00',
-  end: '07:00',
+  end: '07:00'
 }
 
 export interface OfflineReminderConfig {
@@ -127,7 +147,7 @@ export const DEFAULT_OFFLINE_REMINDER: OfflineReminderConfig = {
   token: '',
   title: '账号下线提醒',
   msg: '账号下线',
-  offlineDeleteSec: 120,
+  offlineDeleteSec: 120
 }
 
 export interface AccountConfigSnapshot {
@@ -147,7 +167,7 @@ export const DEFAULT_ACCOUNT_CONFIG: AccountConfigSnapshot = {
   intervals: { ...DEFAULT_INTERVALS },
   friendQuietHours: { ...DEFAULT_FRIEND_QUIET_HOURS },
   friendBlacklist: [],
-  stealCropBlacklist: [],
+  stealCropBlacklist: []
 }
 
 export const OP_TYPE_NAMES: Record<number, string> = {
@@ -158,5 +178,5 @@ export const OP_TYPE_NAMES: Record<number, string> = {
   10005: '除草',
   10006: '除虫',
   10007: '浇水',
-  10008: '偷菜',
+  10008: '偷菜'
 }

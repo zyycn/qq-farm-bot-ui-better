@@ -1,11 +1,12 @@
-import { BadRequestException, Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common'
-import { ProtoService } from './proto.service'
-import { GameConfigService } from './game-config.service'
+import type { OnModuleDestroy, OnModuleInit } from '@nestjs/common'
+import type { AccountRunnerCallbacks } from './account-runner'
+import { BadRequestException, Injectable, Logger } from '@nestjs/common'
 import { StoreService } from '../store/store.service'
+import { AccountRunner } from './account-runner'
+import { GameConfigService } from './game-config.service'
 import { GameLogService } from './game-log.service'
 import { GamePushService } from './game-push.service'
-import { AccountRunner } from './account-runner'
-import type { AccountRunnerCallbacks } from './account-runner'
+import { ProtoService } from './proto.service'
 
 interface RunningAccount {
   runner: AccountRunner
@@ -13,7 +14,7 @@ interface RunningAccount {
   status: any
   disconnectedSince: number
   autoDeleteTriggered: boolean
-  wsError: { code: number; message: string; at: number } | null
+  wsError: { code: number, message: string, at: number } | null
 }
 
 @Injectable()
@@ -35,7 +36,8 @@ export class AccountManagerService implements OnModuleInit, OnModuleDestroy {
     onLog?: (entry: any) => void
     onAccountLog?: (entry: any) => void
   }) {
-    if (callbacks.onStatusSync) this.onStatusSyncCallback = callbacks.onStatusSync
+    if (callbacks.onStatusSync)
+      this.onStatusSyncCallback = callbacks.onStatusSync
     this.gameLog.setCallbacks({
       onLog: callbacks.onLog ?? undefined,
       onAccountLog: callbacks.onAccountLog ?? undefined
@@ -55,7 +57,8 @@ export class AccountManagerService implements OnModuleInit, OnModuleDestroy {
   private async autoStartAccounts() {
     const accounts = this.store.getAllAccounts()
     for (const acc of accounts) {
-      if (acc.code) this.startAccount(acc.id)
+      if (acc.code)
+        this.startAccount(acc.id)
     }
   }
 
@@ -63,29 +66,34 @@ export class AccountManagerService implements OnModuleInit, OnModuleDestroy {
 
   startAccount(accountId: string): boolean {
     const id = String(accountId ?? '').trim()
-    if (!id) return false
+    if (!id)
+      return false
 
     const existing = this.runners.get(id)
     if (existing) {
-      if (existing.runner.isActive()) return false
+      if (existing.runner.isActive())
+        return false
       this.runners.delete(id)
     }
 
     const acc = this.store.getAccountById(id)
-    if (!acc) return false
-    if (!acc.code || String(acc.code).trim() === '') return false
+    if (!acc)
+      return false
+    if (!acc.code || String(acc.code).trim() === '')
+      return false
 
     const callbacks: AccountRunnerCallbacks = {
       onStatusSync: (runnerId, status, name) => this.handleStatusSync(runnerId, status, name),
-      onLog: entry => {
+      onLog: (entry) => {
         const r = this.runners.get(id)
         this.gameLog.appendLog(id, r?.name ?? acc.name ?? '', entry)
       },
       onKicked: (aid, reason) => this.handleKicked(aid, reason),
       onWsError: (aid, code, message) => this.handleWsError(aid, code, message),
-      onStopped: aid => {
+      onStopped: (aid) => {
         const r = this.runners.get(aid)
-        if (r && !r.runner.isActive()) this.runners.delete(aid)
+        if (r && !r.runner.isActive())
+          this.runners.delete(aid)
       }
     }
 
@@ -102,7 +110,7 @@ export class AccountManagerService implements OnModuleInit, OnModuleDestroy {
     }
     this.runners.set(id, record)
 
-    runner.start({ code: acc.code, platform: acc.platform || 'qq' }).catch(e => {
+    runner.start({ code: acc.code, platform: acc.platform || 'qq' }).catch((e) => {
       this.logger.error(`账号 ${acc.name} 启动失败: ${e?.message}`)
       this.runners.delete(id)
     })
@@ -113,7 +121,8 @@ export class AccountManagerService implements OnModuleInit, OnModuleDestroy {
 
   async stopAccount(accountId: string): Promise<boolean> {
     const record = this.runners.get(accountId)
-    if (!record) return false
+    if (!record)
+      return false
     await record.runner.stop()
     this.runners.delete(accountId)
     this.gameLog.addAccountLog('stop', `停止账号: ${record.name}`, accountId, record.name)
@@ -133,7 +142,8 @@ export class AccountManagerService implements OnModuleInit, OnModuleDestroy {
 
   private handleStatusSync(accountId: string, status: any, name: string) {
     const record = this.runners.get(accountId)
-    if (!record) return
+    if (!record)
+      return
 
     record.status = { accountId, accountName: record.name, ...status }
     if (name && name !== '未知' && name !== '未登录' && record.name !== name) {
@@ -156,7 +166,8 @@ export class AccountManagerService implements OnModuleInit, OnModuleDestroy {
       record.wsError = null
     } else if (record.runner.isActive()) {
       const now = Date.now()
-      if (!record.disconnectedSince) record.disconnectedSince = now
+      if (!record.disconnectedSince)
+        record.disconnectedSince = now
       const offlineMs = now - record.disconnectedSince
       const offlineReminder = this.store.getOfflineReminder()
       const autoDeleteMs = (offlineReminder?.offlineDeleteSec || 120) * 1000
@@ -182,7 +193,8 @@ export class AccountManagerService implements OnModuleInit, OnModuleDestroy {
 
   private handleKicked(accountId: string, reason: string) {
     const record = this.runners.get(accountId)
-    if (!record) return
+    if (!record)
+      return
     this.logger.warn(`账号 ${record.name} 被踢下线: ${reason}`)
     this.gamePush.triggerOfflineReminder(accountId, record.name, `kickout:${reason}`, 0)
     this.gameLog.addAccountLog('kickout_stop', `账号 ${record.name} 被踢下线，已自动停止`, accountId, record.name)
@@ -191,7 +203,8 @@ export class AccountManagerService implements OnModuleInit, OnModuleDestroy {
 
   private handleWsError(accountId: string, code: number, message: string) {
     const record = this.runners.get(accountId)
-    if (!record) return
+    if (!record)
+      return
     record.wsError = { code, message, at: Date.now() }
     if (code === 400) {
       this.gameLog.addAccountLog('ws_400', `账号 ${record.name} 登录失效，请更新 Code`, accountId, record.name)
@@ -213,7 +226,8 @@ export class AccountManagerService implements OnModuleInit, OnModuleDestroy {
 
   resolveAccountId(rawRef: string | number): string {
     const ref = String(rawRef ?? '').trim()
-    if (!ref) return ''
+    if (!ref)
+      return ''
     const accounts = this.store.getAllAccounts()
     const found = accounts.find(a => String(a?.id) === ref || String(a?.uin) === ref || String(a?.qq) === ref)
     return found ? String(found.id) : ref
@@ -234,7 +248,8 @@ export class AccountManagerService implements OnModuleInit, OnModuleDestroy {
   /** 获取运行中账号的 Runner，不存在则抛出 BadRequestException，供 Controller 直接调用 runner 方法 */
   getRunnerOrThrow(accountId: string): AccountRunner {
     const runner = this.getRunner(accountId)
-    if (!runner) throw new BadRequestException('账号未运行')
+    if (!runner)
+      throw new BadRequestException('账号未运行')
     return runner
   }
 
@@ -244,7 +259,7 @@ export class AccountManagerService implements OnModuleInit, OnModuleDestroy {
 
   getLogs(
     accountId: string,
-    options?: { keyword?: string; limit?: number; module?: string; event?: string; isWarn?: boolean }
+    options?: { keyword?: string, limit?: number, module?: string, event?: string, isWarn?: boolean }
   ) {
     return this.gameLog.getLogs(accountId, options)
   }
@@ -259,7 +274,8 @@ export class AccountManagerService implements OnModuleInit, OnModuleDestroy {
 
   broadcastConfig(accountId: string) {
     const runner = this.getRunner(accountId)
-    if (!runner) return
+    if (!runner)
+      return
     const snapshot = this.store.getConfigSnapshot(accountId)
     runner.applyConfig(snapshot)
   }

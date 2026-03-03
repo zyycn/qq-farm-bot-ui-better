@@ -1,9 +1,9 @@
 import { Module } from '@nestjs/common'
-import { RealtimeGateway } from './realtime.gateway'
 import { AuthModule } from '../auth/auth.module'
+import { RealtimeGateway } from './realtime.gateway'
 
 @Module({
   imports: [AuthModule],
-  providers: [RealtimeGateway],
+  providers: [RealtimeGateway]
 })
 export class RealtimeModule {}

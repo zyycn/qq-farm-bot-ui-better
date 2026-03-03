@@ -15,7 +15,8 @@ export class QrController {
   @Public()
   @Post('check')
   async check(@Body('code') code: string) {
-    if (!code) throw new BadRequestException('缺少 code')
+    if (!code)
+      throw new BadRequestException('缺少 code')
 
     const result = await this.qrLogin.queryMiniProgramStatus(code)
 
@@ -27,8 +28,10 @@ export class QrController {
       const avatar = uin ? `https://q1.qlogo.cn/g?b=qq&nk=${uin}&s=640` : ''
       return { status: 'OK', code: authCode, uin, avatar, nickname }
     }
-    if (result.status === 'Used') return { status: 'Used' }
-    if (result.status === 'Wait') return { status: 'Wait' }
+    if (result.status === 'Used')
+      return { status: 'Used' }
+    if (result.status === 'Wait')
+      return { status: 'Wait' }
     return { status: 'Error', error: (result as any).msg }
   }
 }

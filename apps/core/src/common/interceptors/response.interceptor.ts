@@ -1,5 +1,6 @@
-import { CallHandler, ExecutionContext, Injectable, NestInterceptor } from '@nestjs/common'
-import { Observable } from 'rxjs'
+import type { CallHandler, ExecutionContext, NestInterceptor } from '@nestjs/common'
+import type { Observable } from 'rxjs'
+import { Injectable } from '@nestjs/common'
 import { map } from 'rxjs/operators'
 
 export interface ApiResponse<T> {
@@ -20,9 +21,9 @@ export class ResponseInterceptor<T> implements NestInterceptor<T, ApiResponse<T>
         return {
           code: statusCode,
           message: 'ok',
-          data: data ?? null,
+          data: data ?? null
         }
-      }),
+      })
     )
   }
 }

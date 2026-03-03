@@ -10,7 +10,8 @@ export class FriendsController {
   @Get()
   async getFriends(@AccountId() accountId: string) {
     const id = this.manager.resolveAccountId(accountId)
-    if (!id) throw new BadRequestException('缺少 x-account-id')
+    if (!id)
+      throw new BadRequestException('缺少 x-account-id')
     return this.manager.getRunnerOrThrow(id).getFriends()
   }
 }
@@ -22,7 +23,8 @@ export class FriendController {
   @Get(':gid/lands')
   async getFriendLands(@AccountId() accountId: string, @Param('gid') gid: string) {
     const id = this.manager.resolveAccountId(accountId)
-    if (!id) throw new BadRequestException('缺少 x-account-id')
+    if (!id)
+      throw new BadRequestException('缺少 x-account-id')
     return this.manager.getRunnerOrThrow(id).getFriendLands(Number(gid))
   }
 
@@ -30,10 +32,11 @@ export class FriendController {
   async doFriendOp(
     @AccountId() accountId: string,
     @Param('gid') gid: string,
-    @Body('opType') opType: string,
+    @Body('opType') opType: string
   ) {
     const id = this.manager.resolveAccountId(accountId)
-    if (!id) throw new BadRequestException('缺少 x-account-id')
+    if (!id)
+      throw new BadRequestException('缺少 x-account-id')
     return this.manager.getRunnerOrThrow(id).doFriendOp(Number(gid), opType)
   }
 }
@@ -42,21 +45,24 @@ export class FriendController {
 export class FriendBlacklistController {
   constructor(
     private manager: AccountManagerService,
-    private store: StoreService,
+    private store: StoreService
   ) {}
 
   @Get()
   getBlacklist(@AccountId() accountId: string) {
     const id = this.manager.resolveAccountId(accountId)
-    if (!id) throw new BadRequestException('缺少 x-account-id')
+    if (!id)
+      throw new BadRequestException('缺少 x-account-id')
     return this.store.getFriendBlacklist(id)
   }
 
   @Post('toggle')
   toggleBlacklist(@AccountId() accountId: string, @Body('gid') gid: number) {
     const id = this.manager.resolveAccountId(accountId)
-    if (!id) throw new BadRequestException('缺少 x-account-id')
-    if (!gid) throw new BadRequestException('缺少 gid')
+    if (!id)
+      throw new BadRequestException('缺少 x-account-id')
+    if (!gid)
+      throw new BadRequestException('缺少 gid')
 
     const current = this.store.getFriendBlacklist(id)
     const next = current.includes(gid) ? current.filter(g => g !== gid) : [...current, gid]

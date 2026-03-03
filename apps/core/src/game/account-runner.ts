@@ -1,19 +1,19 @@
+import type { StoreService } from '../store/store.service'
+import type { IntervalsConfig } from './constants'
+import type { GameConfigService } from './game-config.service'
+import type { ProtoService } from './proto.service'
 import { Logger } from '@nestjs/common'
 import { GameClient } from './game-client'
-import type { ProtoService } from './proto.service'
-import type { GameConfigService } from './game-config.service'
-import type { StoreService } from '../store/store.service'
 import { Scheduler } from './scheduler'
-import { StatsTracker } from './services/stats.worker'
 import { AnalyticsWorker } from './services/analytics.worker'
+import { DailyRewardsWorker } from './services/daily-rewards.worker'
 import { FarmWorker } from './services/farm.worker'
 import { FriendWorker } from './services/friend.worker'
+import { InviteWorker } from './services/invite.worker'
+import { StatsTracker } from './services/stats.worker'
 import { TaskWorker } from './services/task.worker'
 import { WarehouseWorker } from './services/warehouse.worker'
-import { DailyRewardsWorker } from './services/daily-rewards.worker'
-import { InviteWorker } from './services/invite.worker'
 import { toNum } from './utils'
-import type { IntervalsConfig } from './constants'
 
 export interface AccountRunnerConfig {
   code: string
@@ -66,7 +66,7 @@ export class AccountRunner {
     private proto: ProtoService,
     private gameConfig: GameConfigService,
     private store: StoreService,
-    private callbacks: AccountRunnerCallbacks,
+    private callbacks: AccountRunnerCallbacks
   ) {
     this.logger = new Logger(`Runner:${accountId}`)
     this.scheduler = new Scheduler(`runner-${accountId}`)
@@ -89,7 +89,8 @@ export class AccountRunner {
   // ========== Lifecycle ==========
 
   async start(config: AccountRunnerConfig) {
-    if (this.isRunning) return
+    if (this.isRunning)
+      return
     this.isRunning = true
 
     this.client = new GameClient(this.accountId, this.proto)
@@ -114,7 +115,8 @@ export class AccountRunner {
     this.client.on('goldChanged', () => this.syncStatus())
     this.client.on('expChanged', () => this.syncStatus())
     this.client.on('sell', (delta: number) => {
-      if (Number.isFinite(delta) && delta > 0) this.stats.recordOperation('sell', 1)
+      if (Number.isFinite(delta) && delta > 0)
+        this.stats.recordOperation('sell', 1)
     })
 
     this.log('正在连接服务器...', 'connect')
@@ -128,17 +130,22 @@ export class AccountRunner {
         const rep = await this.warehouse.getBag()
         const items = this.warehouse.getBagItems(rep)
         let coupon = 0
-        for (const it of (items || [])) { if (toNum(it?.id) === 1002) { coupon = toNum(it.count); break } }
+        for (const it of (items || [])) {
+          if (toNum(it?.id) === 1002) {
+            coupon = toNum(it.count)
+            break
+          }
+        }
         this.client.userState.coupon = Math.max(0, coupon)
-      }
-      catch {}
+      } catch {}
 
       const us = this.client.userState
       this.stats.initStats(Number(us.gold || 0), Number(us.exp || 0), Number(us.coupon || 0))
 
       await this.invite.processInviteCodes().catch(() => {})
       const auto = this.store.getAutomation(this.accountId)
-      if (auto.fertilizer_gift) await this.warehouse.autoOpenFertilizerGiftPacks().catch(() => 0)
+      if (auto.fertilizer_gift)
+        await this.warehouse.autoOpenFertilizerGiftPacks().catch(() => 0)
 
       this.farm.startFarmLoop({ externalScheduler: true })
       this.friend.startFriendLoop({ externalScheduler: true })
@@ -155,7 +162,8 @@ export class AccountRunner {
   }
 
   async stop() {
-    if (!this.isRunning) return
+    if (!this.isRunning)
+      return
     this.isRunning = false
     this.loginReady = false
 
@@ -178,7 +186,8 @@ export class AccountRunner {
   private randomInterval(minMs: number, maxMs: number): number {
     const minSec = Math.max(1, Math.floor(Math.max(1000, minMs) / 1000))
     const maxSec = Math.max(minSec, Math.floor(Math.max(1000, maxMs) / 1000))
-    if (maxSec === minSec) return minSec * 1000
+    if (maxSec === minSec)
+      return minSec * 1000
     return (minSec + Math.floor(Math.random() * (maxSec - minSec + 1))) * 1000
   }
 
@@ -189,60 +198,70 @@ export class AccountRunner {
   }
 
   private async runFarmTick() {
-    if (this.farmTaskRunning) return
+    if (this.farmTaskRunning)
+      return
     this.farmTaskRunning = true
     try {
       const auto = this.store.getAutomation(this.accountId)
-      if (auto.farm) await this.farm.checkFarm()
-      if (auto.task) await this.task.checkAndClaimTasks()
-      if (auto.email) await this.dailyRewards.checkAndClaimEmails()
-      if (auto.fertilizer_gift) await this.warehouse.autoOpenFertilizerGiftPacks()
-      if (auto.fertilizer_buy) await this.dailyRewards.autoBuyOrganicFertilizer()
-    }
-    catch (e: any) {
+      if (auto.farm)
+        await this.farm.checkFarm()
+      if (auto.task)
+        await this.task.checkAndClaimTasks()
+      if (auto.email)
+        await this.dailyRewards.checkAndClaimEmails()
+      if (auto.fertilizer_gift)
+        await this.warehouse.autoOpenFertilizerGiftPacks()
+      if (auto.fertilizer_buy)
+        await this.dailyRewards.autoBuyOrganicFertilizer()
+    } catch (e: any) {
       this.warn(`农场调度执行失败: ${e?.message}`, 'schedule_error')
-    }
-    finally {
+    } finally {
       this.nextFarmRunAt = Date.now() + this.randomInterval(this.farmIntervalMin, this.farmIntervalMax)
       this.farmTaskRunning = false
     }
   }
 
   private async runFriendTick() {
-    if (this.friendTaskRunning) return
+    if (this.friendTaskRunning)
+      return
     this.friendTaskRunning = true
     try {
       const auto = this.store.getAutomation(this.accountId)
-      if (auto.friend_steal || auto.friend_help || auto.friend_bad) await this.friend.checkFriends()
-    }
-    catch (e: any) {
+      if (auto.friend_steal || auto.friend_help || auto.friend_bad)
+        await this.friend.checkFriends()
+    } catch (e: any) {
       this.warn(`好友调度执行失败: ${e?.message}`, 'schedule_error')
-    }
-    finally {
+    } finally {
       this.nextFriendRunAt = Date.now() + this.randomInterval(this.friendIntervalMin, this.friendIntervalMax)
       this.friendTaskRunning = false
     }
   }
 
   private scheduleNext() {
-    if (!this.unifiedRunning || !this.loginReady) return
+    if (!this.unifiedRunning || !this.loginReady)
+      return
     this.scheduler.clear('unified_tick')
     const now = Date.now()
     const nextAt = Math.min(this.nextFarmRunAt || now + 1000, this.nextFriendRunAt || now + 1000)
     const delay = Math.max(1000, nextAt - now)
     this.scheduler.setTimeoutTask('unified_tick', delay, async () => {
-      if (!this.unifiedRunning || !this.loginReady) return
+      if (!this.unifiedRunning || !this.loginReady)
+        return
       const now2 = Date.now()
       const tasks: Promise<any>[] = []
-      if (now2 >= this.nextFarmRunAt) tasks.push(this.runFarmTick())
-      if (now2 >= this.nextFriendRunAt) tasks.push(this.runFriendTick())
-      if (tasks.length) await Promise.all(tasks)
+      if (now2 >= this.nextFarmRunAt)
+        tasks.push(this.runFarmTick())
+      if (now2 >= this.nextFriendRunAt)
+        tasks.push(this.runFriendTick())
+      if (tasks.length)
+        await Promise.all(tasks)
       this.scheduleNext()
     })
   }
 
   private startUnifiedScheduler() {
-    if (this.unifiedRunning) return
+    if (this.unifiedRunning)
+      return
     this.unifiedRunning = true
     this.resetSchedule()
     this.scheduleNext()
@@ -258,17 +277,23 @@ export class AccountRunner {
   // ========== Daily Routines ==========
 
   private async runDailyRoutines(force = false) {
-    if (!this.loginReady) return
+    if (!this.loginReady)
+      return
     const auto = this.store.getAutomation(this.accountId)
     try {
-      if (auto.email) await this.dailyRewards.checkAndClaimEmails(force)
-      if (auto.share_reward) await this.dailyRewards.performDailyShare(force)
-      if (auto.month_card) await this.dailyRewards.performDailyMonthCardGift(force)
-      if (auto.open_server_gift) await this.dailyRewards.performDailyOpenServerGift(force)
-      if (auto.free_gifts) await this.dailyRewards.buyFreeGifts(force)
-      if (auto.vip_gift) await this.dailyRewards.performDailyVipGift(force)
-    }
-    catch (e: any) {
+      if (auto.email)
+        await this.dailyRewards.checkAndClaimEmails(force)
+      if (auto.share_reward)
+        await this.dailyRewards.performDailyShare(force)
+      if (auto.month_card)
+        await this.dailyRewards.performDailyMonthCardGift(force)
+      if (auto.open_server_gift)
+        await this.dailyRewards.performDailyOpenServerGift(force)
+      if (auto.free_gifts)
+        await this.dailyRewards.buyFreeGifts(force)
+      if (auto.vip_gift)
+        await this.dailyRewards.performDailyVipGift(force)
+    } catch (e: any) {
       this.warn(`每日任务调度失败: ${e?.message}`, 'schedule_error')
     }
   }
@@ -278,9 +303,11 @@ export class AccountRunner {
     this.lastDailyRunDate = this.getLocalDateKey()
     this.runDailyRoutines(true).catch(() => {})
     this.scheduler.setIntervalTask('daily_routine_interval', 30_000, () => {
-      if (!this.loginReady) return
+      if (!this.loginReady)
+        return
       const today = this.getLocalDateKey()
-      if (today === this.lastDailyRunDate) return
+      if (today === this.lastDailyRunDate)
+        return
       this.lastDailyRunDate = today
       this.runDailyRoutines(true).catch(() => {})
     })
@@ -310,9 +337,11 @@ export class AccountRunner {
 
   applyConfig(snapshot: any) {
     const rev = Number(snapshot?.__revision || 0)
-    if (rev > 0) this.appliedConfigRevision = rev
+    if (rev > 0)
+      this.appliedConfigRevision = rev
 
-    if (snapshot?.intervals) this.applyIntervals(snapshot.intervals)
+    if (snapshot?.intervals)
+      this.applyIntervals(snapshot.intervals)
 
     if (this.loginReady) {
       this.farm.refreshFarmLoop(200)
@@ -329,7 +358,8 @@ export class AccountRunner {
         const fert = String(auto.fertilizer || '').toLowerCase()
         if (fert === 'both' || fert === 'organic') {
           this.scheduler.setTimeoutTask('fertilizer_immediate', 600, async () => {
-            if (this.loginReady) await this.farm.runFertilizerByConfig([]).catch(() => {})
+            if (this.loginReady)
+              await this.farm.runFertilizerByConfig([]).catch(() => {})
           })
         }
       }
@@ -348,16 +378,19 @@ export class AccountRunner {
 
   private onWsError(payload: any) {
     const code = Number(payload?.code || 0)
-    if (code !== 400) return
+    if (code !== 400)
+      return
     this.warn('连接被拒绝，可能需要更新 Code', 'connect')
     this.callbacks.onWsError?.(this.accountId, code, payload?.message || '')
-    if (this.isRunning) this.scheduler.setTimeoutTask('ws_error_cleanup', 1000, () => this.stop())
+    if (this.isRunning)
+      this.scheduler.setTimeoutTask('ws_error_cleanup', 1000, () => this.stop())
   }
 
   // ========== Status ==========
 
   private syncStatus() {
-    if (!this.callbacks.onStatusSync) return
+    if (!this.callbacks.onStatusSync)
+      return
     const connected = this.isConnected()
     const us = this.client?.userState || { name: '', level: 0, gold: 0, exp: 0, coupon: 0 }
     const limits = this.friend?.getOperationLimits?.() || {}
@@ -374,8 +407,8 @@ export class AccountRunner {
       configRevision: this.appliedConfigRevision,
       nextChecks: {
         farmRemainSec: Math.max(0, Math.ceil((this.nextFarmRunAt - nowMs) / 1000)),
-        friendRemainSec: Math.max(0, Math.ceil((this.nextFriendRunAt - nowMs) / 1000)),
-      },
+        friendRemainSec: Math.max(0, Math.ceil((this.nextFriendRunAt - nowMs) / 1000))
+      }
     }
 
     const hash = JSON.stringify(data)
@@ -419,8 +452,8 @@ export class AccountRunner {
         { key: 'daily_share', label: '分享礼包', enabled: !!auto.share_reward, doneToday: !!shareState.doneToday, lastAt: shareState.lastClaimAt },
         { key: 'vip_daily_gift', label: '会员礼包', enabled: !!auto.vip_gift, doneToday: !!vipState.doneToday, lastAt: vipState.lastClaimAt },
         { key: 'month_card_gift', label: '月卡礼包', enabled: !!auto.month_card, doneToday: !!monthState.doneToday, lastAt: monthState.lastClaimAt },
-        { key: 'open_server_gift', label: '开服红包', enabled: !!auto.open_server_gift, doneToday: !!openServerState.doneToday, lastAt: openServerState.lastClaimAt },
-      ],
+        { key: 'open_server_gift', label: '开服红包', enabled: !!auto.open_server_gift, doneToday: !!openServerState.doneToday, lastAt: openServerState.lastClaimAt }
+      ]
     }
   }
 

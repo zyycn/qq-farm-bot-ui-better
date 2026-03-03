@@ -1,23 +1,25 @@
+import type { OnModuleInit } from '@nestjs/common'
+import type {
+  OnGatewayConnection,
+  OnGatewayDisconnect
+} from '@nestjs/websockets'
+import type { Server, Socket } from 'socket.io'
+import { JwtService } from '@nestjs/jwt'
 import {
   ConnectedSocket,
   MessageBody,
-  OnGatewayConnection,
-  OnGatewayDisconnect,
   SubscribeMessage,
   WebSocketGateway,
-  WebSocketServer,
+  WebSocketServer
 } from '@nestjs/websockets'
-import { OnModuleInit } from '@nestjs/common'
-import { Server, Socket } from 'socket.io'
-import { JwtService } from '@nestjs/jwt'
 import { AccountManagerService } from '../../game/account-manager.service'
 
 @WebSocketGateway({
   cors: {
     origin: '*',
     methods: ['GET', 'POST'],
-    allowedHeaders: ['Authorization', 'x-account-id'],
-  },
+    allowedHeaders: ['Authorization', 'x-account-id']
+  }
 })
 export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect, OnModuleInit {
   @WebSocketServer()
@@ -25,7 +27,7 @@ export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect
 
   constructor(
     private jwtService: JwtService,
-    private manager: AccountManagerService,
+    private manager: AccountManagerService
   ) {}
 
   onModuleInit() {
@@ -35,14 +37,16 @@ export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect
       },
       onLog: (entry) => {
         const id = String(entry?.accountId || '').trim()
-        if (id) this.server?.to(`account:${id}`)?.emit('log:new', entry)
+        if (id)
+          this.server?.to(`account:${id}`)?.emit('log:new', entry)
         this.server?.to('account:all')?.emit('log:new', entry)
       },
       onAccountLog: (entry) => {
         const id = String(entry?.accountId || '').trim()
-        if (id) this.server?.to(`account:${id}`)?.emit('account-log:new', entry)
+        if (id)
+          this.server?.to(`account:${id}`)?.emit('account-log:new', entry)
         this.server?.to('account:all')?.emit('account-log:new', entry)
-      },
+      }
     })
   }
 
@@ -58,8 +62,7 @@ export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect
       }
 
       this.jwtService.verify(token)
-    }
-    catch {
+    } catch {
       socket.disconnect(true)
       return
     }
@@ -76,7 +79,7 @@ export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect
   @SubscribeMessage('subscribe')
   handleSubscribe(
     @ConnectedSocket() socket: Socket,
-    @MessageBody() payload: any,
+    @MessageBody() payload: any
   ) {
     const body = payload && typeof payload === 'object' ? payload : {}
     this.applySubscription(socket, body.accountId || '')
@@ -89,14 +92,14 @@ export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect
       : ''
 
     for (const room of socket.rooms) {
-      if (room.startsWith('account:')) socket.leave(room)
+      if (room.startsWith('account:'))
+        socket.leave(room)
     }
 
     if (resolved) {
       socket.join(`account:${resolved}`)
       ;(socket.data as any).accountId = resolved
-    }
-    else {
+    } else {
       socket.join('account:all')
       ;(socket.data as any).accountId = ''
     }
@@ -113,20 +116,20 @@ export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect
       const currentLogs = this.manager.getLogs(targetId, { limit: 100 })
       socket.emit('logs:snapshot', {
         accountId: targetId || 'all',
-        logs: Array.isArray(currentLogs) ? currentLogs : [],
+        logs: Array.isArray(currentLogs) ? currentLogs : []
       })
 
       const currentAccountLogs = this.manager.getAccountLogs(100)
       socket.emit('account-logs:snapshot', {
-        logs: Array.isArray(currentAccountLogs) ? currentAccountLogs : [],
+        logs: Array.isArray(currentAccountLogs) ? currentAccountLogs : []
       })
-    }
-    catch {}
+    } catch {}
   }
 
   private emitToAccount(accountId: string, event: string, data: any) {
     const id = String(accountId || '').trim()
-    if (!id) return
+    if (!id)
+      return
     this.server?.to(`account:${id}`)?.emit(event, data)
     this.server?.to('account:all')?.emit(event, data)
   }

@@ -1,8 +1,8 @@
+import type { DrizzleDB } from '../database/drizzle.provider'
 import { Inject, Injectable, Logger } from '@nestjs/common'
 import { Cron } from '@nestjs/schedule'
 import { sql } from 'drizzle-orm'
 import { DRIZZLE_TOKEN } from '../database/drizzle.provider'
-import type { DrizzleDB } from '../database/drizzle.provider'
 import * as schema from '../database/schema'
 
 const RETENTION_MS = 30 * 24 * 60 * 60 * 1000
@@ -20,8 +20,10 @@ export class GameLogService {
   constructor(@Inject(DRIZZLE_TOKEN) private db: DrizzleDB) {}
 
   setCallbacks(callbacks: { onLog?: (entry: any) => void, onAccountLog?: (entry: any) => void }) {
-    if (callbacks.onLog) this.onLogCallback = callbacks.onLog
-    if (callbacks.onAccountLog) this.onAccountLogCallback = callbacks.onAccountLog
+    if (callbacks.onLog)
+      this.onLogCallback = callbacks.onLog
+    if (callbacks.onAccountLog)
+      this.onAccountLogCallback = callbacks.onAccountLog
   }
 
   /** 写入一条农场/运行日志（内存 + 持久化 + 实时回调） */
@@ -31,7 +33,7 @@ export class GameLogService {
       accountId,
       accountName,
       ts: Date.now(),
-      _searchText: `${entry?.msg || ''} ${entry?.tag || ''} ${JSON.stringify(entry?.meta || {})}`.toLowerCase(),
+      _searchText: `${entry?.msg || ''} ${entry?.tag || ''} ${JSON.stringify(entry?.meta || {})}`.toLowerCase()
     }
 
     let list = this.perAccountLogs.get(accountId)
@@ -40,10 +42,12 @@ export class GameLogService {
       this.perAccountLogs.set(accountId, list)
     }
     list.push(logEntry)
-    if (list.length > 1000) list.shift()
+    if (list.length > 1000)
+      list.shift()
 
     this.globalLogs.push(logEntry)
-    if (this.globalLogs.length > 1000) this.globalLogs.shift()
+    if (this.globalLogs.length > 1000)
+      this.globalLogs.shift()
 
     this.persistLog(logEntry)
     this.onLogCallback?.(logEntry)
@@ -51,7 +55,7 @@ export class GameLogService {
 
   getLogs(
     accountId: string,
-    options?: { keyword?: string, limit?: number, module?: string, event?: string, isWarn?: boolean },
+    options?: { keyword?: string, limit?: number, module?: string, event?: string, isWarn?: boolean }
   ) {
     const limit = options?.limit || 100
     const keyword = (options?.keyword || '').toLowerCase().trim()
@@ -76,7 +80,8 @@ export class GameLogService {
   addAccountLog(action: string, msg: string, accountId: string, accountName: string, extra?: any) {
     const entry = { action, msg, accountId, accountName, ts: Date.now(), ...extra }
     this.accountLogs.push(entry)
-    if (this.accountLogs.length > 500) this.accountLogs.shift()
+    if (this.accountLogs.length > 500)
+      this.accountLogs.shift()
     this.db.insert(schema.accountLogs).values({
       accountId,
       accountName,
@@ -84,7 +89,7 @@ export class GameLogService {
       msg,
       reason: extra?.reason || '',
       ts: Date.now(),
-      extra: entry,
+      extra: entry
     }).catch(() => {})
     this.onAccountLogCallback?.(entry)
   }
@@ -104,10 +109,9 @@ export class GameLogService {
         msg: entry?.msg || '',
         isWarn: !!entry?.isWarn,
         ts: entry?.ts || Date.now(),
-        meta: entry?.meta || {},
+        meta: entry?.meta || {}
       })
-    }
-    catch {}
+    } catch {}
   }
 
   /** 每日凌晨 4 点清理 30 天前的农场日志与账号操作日志 */
@@ -137,8 +141,7 @@ export class GameLogService {
       if (logsDeleted > 0 || accountLogsDeleted > 0) {
         this.logger.log(`日志清理完成: 农场日志删除 ${logsDeleted} 条, 账号操作日志删除 ${accountLogsDeleted} 条`)
       }
-    }
-    catch (e: any) {
+    } catch (e: any) {
       this.logger.warn(`日志清理失败: ${e?.message}`)
     }
   }

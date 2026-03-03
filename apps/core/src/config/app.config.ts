@@ -10,5 +10,5 @@ export default registerAs('app', () => ({
   clientVersion: '1.6.0.14_20251224',
   platform: 'qq',
   os: 'iOS',
-  heartbeatInterval: 25000,
+  heartbeatInterval: 25000
 }))

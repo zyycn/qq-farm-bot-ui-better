@@ -7,7 +7,7 @@ import { StoreService } from '../../store/store.service'
 export class SettingsController {
   constructor(
     private manager: AccountManagerService,
-    private store: StoreService,
+    private store: StoreService
   ) {}
 
   @Get()
@@ -21,14 +21,15 @@ export class SettingsController {
       stealCropBlacklist: this.store.getStealCropBlacklist(id),
       automation: this.store.getAutomation(id),
       ui: this.store.getUI(),
-      offlineReminder: this.store.getOfflineReminder(),
+      offlineReminder: this.store.getOfflineReminder()
     }
   }
 
   @Post('save')
   async saveSettings(@AccountId() accountId: string, @Body() body: any) {
     const id = this.manager.resolveAccountId(accountId)
-    if (!id) throw new BadRequestException('缺少 x-account-id')
+    if (!id)
+      throw new BadRequestException('缺少 x-account-id')
     const result = this.store.applyConfigSnapshot(body, id)
     this.manager.broadcastConfig(id)
     return result
@@ -49,13 +50,14 @@ export class SettingsController {
 export class AutomationController {
   constructor(
     private manager: AccountManagerService,
-    private store: StoreService,
+    private store: StoreService
   ) {}
 
   @Post()
   async setAutomation(@AccountId() accountId: string, @Body() body: Record<string, any>) {
     const id = this.manager.resolveAccountId(accountId)
-    if (!id) throw new BadRequestException('缺少 x-account-id')
+    if (!id)
+      throw new BadRequestException('缺少 x-account-id')
     let lastData: any = null
     for (const [k, v] of Object.entries(body)) {
       lastData = this.store.setAutomation(k, v, id)

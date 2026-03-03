@@ -2,7 +2,8 @@ import { Logger } from '@nestjs/common'
 
 function assertRequiredText(name: string, value: any): string {
   const text = String(value || '').trim()
-  if (!text) throw new Error(`${name} 不能为空`)
+  if (!text)
+    throw new Error(`${name} 不能为空`)
   return text
 }
 
@@ -35,8 +36,7 @@ export class PushWorker {
     let pushoo: any
     try {
       pushoo = (await import('pushoo')).default
-    }
-    catch {
+    } catch {
       return { ok: false, code: 'module_not_found', msg: 'pushoo 模块未安装', raw: null }
     }
 
@@ -47,8 +47,10 @@ export class PushWorker {
     }
 
     const request: any = { title, content }
-    if (token) request.token = token
-    if (channel === 'webhook') request.options = options
+    if (token)
+      request.token = token
+    if (channel === 'webhook')
+      request.options = options
 
     const result = await pushoo(channel, request)
     const raw = result && typeof result === 'object' ? result : { data: result }

@@ -1,7 +1,8 @@
 import process from 'node:process'
 import { Body, Controller, Get, Post } from '@nestjs/common'
-import { AuthService } from './auth.service'
+import pkg from '../../../package.json'
 import { Public } from '../../common/decorators/public.decorator'
+import { AuthService } from './auth.service'
 
 @Controller()
 export class AuthController {
@@ -21,7 +22,7 @@ export class AuthController {
   @Post('admin/change-password')
   async changePassword(
     @Body('oldPassword') oldPassword: string,
-    @Body('newPassword') newPassword: string,
+    @Body('newPassword') newPassword: string
   ) {
     await this.authService.changePassword(oldPassword, newPassword)
     return null
@@ -34,7 +35,6 @@ export class AuthController {
 
   @Get('ping')
   async ping() {
-    const { version } = require('../../../package.json')
-    return { ok: true, uptime: process.uptime(), version }
+    return { ok: true, uptime: process.uptime(), version: pkg.version }
   }
 }

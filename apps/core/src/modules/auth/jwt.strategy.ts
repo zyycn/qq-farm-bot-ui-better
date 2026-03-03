@@ -14,7 +14,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
-      secretOrKey: configService.get<string>('app.jwtSecret', 'qq-farm-bot-jwt-secret-change-me'),
+      secretOrKey: configService.get<string>('app.jwtSecret', 'qq-farm-bot-jwt-secret-change-me')
     })
   }
 

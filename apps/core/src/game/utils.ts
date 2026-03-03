@@ -5,7 +5,8 @@ export function toLong(val: number): Long {
 }
 
 export function toNum(val: any): number {
-  if (Long.isLong(val)) return val.toNumber()
+  if (Long.isLong(val))
+    return val.toNumber()
   return Number(val) || 0
 }
 
@@ -13,7 +14,8 @@ let serverTimeMs = 0
 let localTimeAtSync = 0
 
 export function getServerTimeSec(): number {
-  if (!serverTimeMs) return Math.floor(Date.now() / 1000)
+  if (!serverTimeMs)
+    return Math.floor(Date.now() / 1000)
   const elapsed = Date.now() - localTimeAtSync
   return Math.floor((serverTimeMs + elapsed) / 1000)
 }
@@ -25,7 +27,8 @@ export function syncServerTime(ms: number): void {
 
 export function toTimeSec(val: any): number {
   const n = toNum(val)
-  if (n <= 0) return 0
+  if (n <= 0)
+    return 0
   return n > 1e12 ? Math.floor(n / 1000) : n
 }
 
@@ -63,7 +66,8 @@ export function getServerDateKey(): string {
 export function normalizeTimeString(v: string | undefined | null, fallback: string): string {
   const s = String(v || '').trim()
   const m = s.match(/^(\d{1,2}):(\d{1,2})$/)
-  if (!m) return fallback
+  if (!m)
+    return fallback
   const hh = Math.max(0, Math.min(23, Number.parseInt(m[1], 10)))
   const mm = Math.max(0, Math.min(59, Number.parseInt(m[2], 10)))
   return `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}`
@@ -72,7 +76,8 @@ export function normalizeTimeString(v: string | undefined | null, fallback: stri
 export function randomIntervalMs(minMs: number, maxMs: number): number {
   const minSec = Math.max(1, Math.floor(Math.max(1000, Number(minMs) || 1000) / 1000))
   const maxSec = Math.max(minSec, Math.floor(Math.max(1000, Number(maxMs) || minSec * 1000) / 1000))
-  if (maxSec === minSec) return minSec * 1000
+  if (maxSec === minSec)
+    return minSec * 1000
   const sec = minSec + Math.floor(Math.random() * (maxSec - minSec + 1))
   return sec * 1000
 }
@@ -80,16 +85,19 @@ export function randomIntervalMs(minMs: number, maxMs: number): number {
 // Cookie/Hash utilities (from qrutils.js)
 export class CookieUtils {
   static parse(cookieStr: string): Record<string, string> {
-    if (!cookieStr) return {}
+    if (!cookieStr)
+      return {}
     return cookieStr.split(';').reduce((acc: Record<string, string>, curr) => {
       const [key, value] = curr.split('=')
-      if (key) acc[key.trim()] = value ? value.trim() : ''
+      if (key)
+        acc[key.trim()] = value ? value.trim() : ''
       return acc
     }, {})
   }
 
   static getValue(cookies: string | string[] | null, key: string): string | null {
-    if (!cookies) return null
+    if (!cookies)
+      return null
     const str = Array.isArray(cookies) ? cookies.join('; ') : cookies
     const match = str.match(new RegExp(`(^|;\\s*)${key}=([^;]*)`))
     return match ? match[2] : null
@@ -97,7 +105,8 @@ export class CookieUtils {
 
   static getUin(cookies: string | string[]): string | null {
     const uin = this.getValue(cookies, 'wxuin') || this.getValue(cookies, 'uin') || this.getValue(cookies, 'ptui_loginuin')
-    if (!uin) return null
+    if (!uin)
+      return null
     return uin.replace(/^o0*/, '')
   }
 }
@@ -128,11 +137,16 @@ export function redactString(input: string): string {
 }
 
 export function sanitizeMeta(value: any, depth = 0): any {
-  if (depth > 4) return '[Truncated]'
-  if (value === null || value === undefined) return value
-  if (typeof value === 'string') return redactString(value)
-  if (typeof value !== 'object') return value
-  if (Array.isArray(value)) return value.map(v => sanitizeMeta(v, depth + 1))
+  if (depth > 4)
+    return '[Truncated]'
+  if (value === null || value === undefined)
+    return value
+  if (typeof value === 'string')
+    return redactString(value)
+  if (typeof value !== 'object')
+    return value
+  if (Array.isArray(value))
+    return value.map(v => sanitizeMeta(v, depth + 1))
 
   const out: Record<string, any> = {}
   for (const [k, v] of Object.entries(value)) {
@@ -146,7 +160,7 @@ const MODULE_TAG_MAP: Record<string, string> = {
   friend: '好友',
   warehouse: '仓库',
   task: '任务',
-  system: '系统',
+  system: '系统'
 }
 
 const TAG_MODULE_MAP: Record<string, string> = {
@@ -161,7 +175,7 @@ const TAG_MODULE_MAP: Record<string, string> = {
   错误: 'system',
   WS: 'system',
   心跳: 'system',
-  推送: 'system',
+  推送: 'system'
 }
 
 export function resolveModuleTag(moduleName: string): string {

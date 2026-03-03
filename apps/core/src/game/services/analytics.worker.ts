@@ -1,7 +1,8 @@
 import type { GameConfigService } from '../game-config.service'
 
 function parseGrowTime(growPhases: string): number {
-  if (!growPhases) return 0
+  if (!growPhases)
+    return 0
   return growPhases.split(';').filter(Boolean).reduce((total, phase) => {
     const match = phase.match(/:(\d+)$/)
     return total + (match ? Number.parseInt(match[1]) : 0)
@@ -9,16 +10,20 @@ function parseGrowTime(growPhases: string): number {
 }
 
 function parseNormalFertilizerReduceSec(growPhases: string): number {
-  if (!growPhases) return 0
+  if (!growPhases)
+    return 0
   const phases = growPhases.split(';').filter(Boolean)
-  if (!phases.length) return 0
+  if (!phases.length)
+    return 0
   const match = phases[0].match(/:(\d+)$/)
   return match ? Number.parseInt(match[1]) : 0
 }
 
 function formatTime(seconds: number): string {
-  if (seconds < 60) return `${seconds}秒`
-  if (seconds < 3600) return `${Math.floor(seconds / 60)}分${seconds % 60}秒`
+  if (seconds < 60)
+    return `${seconds}秒`
+  if (seconds < 3600)
+    return `${Math.floor(seconds / 60)}分${seconds % 60}秒`
   const hours = Math.floor(seconds / 3600)
   const mins = Math.floor((seconds % 3600) / 60)
   return mins > 0 ? `${hours}时${mins}分` : `${hours}时`
@@ -34,7 +39,8 @@ export class AnalyticsWorker {
 
     for (const plant of normalPlants) {
       const baseGrowTime = parseGrowTime(plant.grow_phases)
-      if (baseGrowTime <= 0) continue
+      if (baseGrowTime <= 0)
+        continue
       const seasons = Number((plant as any).seasons) || 1
       const isTwoSeason = seasons === 2
       const growTime = isTwoSeason ? baseGrowTime * 1.5 : baseGrowTime
@@ -57,17 +63,27 @@ export class AnalyticsWorker {
       const cfgLevel = Number(plant.land_level_need)
 
       results.push({
-        id: plant.id, seedId: plant.seed_id, name: plant.name, seasons,
+        id: plant.id,
+        seedId: plant.seed_id,
+        name: plant.name,
+        seasons,
         level: (Number.isFinite(cfgLevel) && cfgLevel > 0) ? cfgLevel : null,
-        growTime, growTimeStr: formatTime(growTime),
-        reduceSec: reduceSecBase, reduceSecApplied,
+        growTime,
+        growTimeStr: formatTime(growTime),
+        reduceSec: reduceSecBase,
+        reduceSecApplied,
         expPerHour: +expPerHour.toFixed(2),
         normalFertilizerExpPerHour: +normalFertilizerExpPerHour.toFixed(2),
         goldPerHour: +goldPerHour.toFixed(2),
         profitPerHour: +profitPerHour.toFixed(2),
         normalFertilizerProfitPerHour: +normalFertilizerProfitPerHour.toFixed(2),
-        income, netProfit, fruitId, fruitCount, fruitPrice, seedPrice,
-        image: this.gameConfig.getItemImageById(plant.seed_id),
+        income,
+        netProfit,
+        fruitId,
+        fruitCount,
+        fruitPrice,
+        seedPrice,
+        image: this.gameConfig.getItemImageById(plant.seed_id)
       })
     }
 
@@ -77,9 +93,10 @@ export class AnalyticsWorker {
       gold: (a, b) => b.goldPerHour - a.goldPerHour,
       profit: (a, b) => b.profitPerHour - a.profitPerHour,
       fert_profit: (a, b) => b.normalFertilizerProfitPerHour - a.normalFertilizerProfitPerHour,
-      level: (a, b) => (b.level ?? -1) - (a.level ?? -1),
+      level: (a, b) => (b.level ?? -1) - (a.level ?? -1)
     }
-    if (sortMap[sortBy]) results.sort(sortMap[sortBy])
+    if (sortMap[sortBy])
+      results.sort(sortMap[sortBy])
     return results
   }
 }

@@ -12,7 +12,7 @@ export const accounts = sqliteTable('accounts', {
   loginType: text('login_type').default('qr'),
   running: integer('running', { mode: 'boolean' }).default(false),
   createdAt: integer('created_at', { mode: 'number' }).default(0),
-  updatedAt: integer('updated_at', { mode: 'number' }).default(0),
+  updatedAt: integer('updated_at', { mode: 'number' }).default(0)
 })
 
 export const accountConfigs = sqliteTable('account_configs', {
@@ -23,12 +23,12 @@ export const accountConfigs = sqliteTable('account_configs', {
   intervals: text('intervals', { mode: 'json' }).$type<Record<string, number>>().default({}),
   friendQuietHours: text('friend_quiet_hours', { mode: 'json' }).$type<Record<string, any>>().default({}),
   friendBlacklist: text('friend_blacklist', { mode: 'json' }).$type<number[]>().default([]),
-  stealCropBlacklist: text('steal_crop_blacklist', { mode: 'json' }).$type<number[]>().default([]),
+  stealCropBlacklist: text('steal_crop_blacklist', { mode: 'json' }).$type<number[]>().default([])
 })
 
 export const globalConfig = sqliteTable('global_config', {
   key: text('key').primaryKey(),
-  value: text('value', { mode: 'json' }).$type<any>(),
+  value: text('value', { mode: 'json' }).$type<any>()
 })
 
 export const logs = sqliteTable('logs', {
@@ -41,7 +41,7 @@ export const logs = sqliteTable('logs', {
   msg: text('msg').default(''),
   isWarn: integer('is_warn', { mode: 'boolean' }).default(false),
   ts: integer('ts', { mode: 'number' }).default(0),
-  meta: text('meta', { mode: 'json' }).$type<Record<string, any>>().default({}),
+  meta: text('meta', { mode: 'json' }).$type<Record<string, any>>().default({})
 })
 
 export const accountLogs = sqliteTable('account_logs', {
@@ -52,5 +52,5 @@ export const accountLogs = sqliteTable('account_logs', {
   msg: text('msg').default(''),
   reason: text('reason').default(''),
   ts: integer('ts', { mode: 'number' }).default(0),
-  extra: text('extra', { mode: 'json' }).$type<Record<string, any>>().default({}),
+  extra: text('extra', { mode: 'json' }).$type<Record<string, any>>().default({})
 })

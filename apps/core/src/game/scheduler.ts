@@ -34,7 +34,8 @@ export class Scheduler {
 
   clear(taskName: string): boolean {
     const entry = this.timers.get(taskName)
-    if (!entry) return false
+    if (!entry)
+      return false
     this.timers.delete(taskName)
     if (entry.kind === 'interval')
       clearInterval(entry.handle as ReturnType<typeof setInterval>)
@@ -49,7 +50,8 @@ export class Scheduler {
   }
 
   setTimeoutTask(taskName: string, delayMs: number, taskFn: () => any): ReturnType<typeof setTimeout> {
-    if (!taskName) throw new Error('taskName 不能为空')
+    if (!taskName)
+      throw new Error('taskName 不能为空')
     this.clear(taskName)
     const delay = Math.max(0, Math.floor(Number(delayMs) || 0))
     const entry: TaskMeta = {
@@ -61,21 +63,20 @@ export class Scheduler {
       runCount: 0,
       running: false,
       preventOverlap: true,
-      handle: null,
+      handle: null
     }
     const handle = setTimeout(async () => {
       const current = this.timers.get(taskName)
-      if (!current || current.handle !== handle) return
+      if (!current || current.handle !== handle)
+        return
       current.running = true
       current.lastRunAt = Date.now()
       current.runCount++
       try {
         await taskFn()
-      }
-      catch (e: any) {
+      } catch (e: any) {
         this.logger.warn(`timeout 任务执行失败: ${taskName} - ${e?.message}`)
-      }
-      finally {
+      } finally {
         const after = this.timers.get(taskName)
         if (after && after.handle === handle)
           this.timers.delete(taskName)
@@ -90,9 +91,10 @@ export class Scheduler {
     taskName: string,
     intervalMs: number,
     taskFn: () => any,
-    options: { preventOverlap?: boolean, runImmediately?: boolean } = {},
+    options: { preventOverlap?: boolean, runImmediately?: boolean } = {}
   ): ReturnType<typeof setInterval> {
-    if (!taskName) throw new Error('taskName 不能为空')
+    if (!taskName)
+      throw new Error('taskName 不能为空')
     this.clear(taskName)
     const delay = Math.max(1, Math.floor(Number(intervalMs) || 1000))
     const preventOverlap = options.preventOverlap !== false
@@ -105,23 +107,23 @@ export class Scheduler {
       runCount: 0,
       running: false,
       preventOverlap,
-      handle: null,
+      handle: null
     }
 
     const runner = async () => {
       const current = this.timers.get(taskName)
-      if (!current) return
-      if (preventOverlap && current.running) return
+      if (!current)
+        return
+      if (preventOverlap && current.running)
+        return
       current.running = true
       current.lastRunAt = Date.now()
       current.runCount++
       try {
         await taskFn()
-      }
-      catch (e: any) {
+      } catch (e: any) {
         this.logger.warn(`interval 任务执行失败: ${taskName} - ${e?.message}`)
-      }
-      finally {
+      } finally {
         const updated = this.timers.get(taskName)
         if (updated) {
           updated.running = false
@@ -159,7 +161,7 @@ export class Scheduler {
         lastRunAt: meta.lastRunAt,
         runCount: meta.runCount,
         running: meta.running,
-        preventOverlap: meta.preventOverlap,
+        preventOverlap: meta.preventOverlap
       })
     }
     tasks.sort((a, b) => a.name.localeCompare(b.name))
@@ -171,7 +173,8 @@ const registryMap = new Map<string, Scheduler>()
 
 export function createScheduler(namespace = 'default'): Scheduler {
   const existing = registryMap.get(namespace)
-  if (existing) return existing
+  if (existing)
+    return existing
   const s = new Scheduler(namespace)
   registryMap.set(namespace, s)
   return s
@@ -180,7 +183,8 @@ export function createScheduler(namespace = 'default'): Scheduler {
 export function getSchedulerRegistrySnapshot(namespace?: string) {
   const list: any[] = []
   for (const [name, scheduler] of registryMap.entries()) {
-    if (namespace && name !== namespace) continue
+    if (namespace && name !== namespace)
+      continue
     list.push(scheduler.getSnapshot())
   }
   list.sort((a: any, b: any) => a.namespace.localeCompare(b.namespace))

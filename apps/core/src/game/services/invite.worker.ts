@@ -1,10 +1,10 @@
+import type { GameClient } from '../game-client'
 import { Buffer } from 'node:buffer'
 import * as fs from 'node:fs'
 import * as path from 'node:path'
 import { Logger } from '@nestjs/common'
-import type { GameClient } from '../game-client'
-import { sleep, toLong } from '../utils'
 import { resolveAssetsDir } from '../../config/paths'
+import { sleep, toLong } from '../utils'
 
 const INVITE_REQUEST_DELAY = 2000
 
@@ -22,7 +22,7 @@ export class InviteWorker {
   constructor(
     private accountId: string,
     private client: GameClient,
-    private platform: string,
+    private platform: string
   ) {
     this.logger = new Logger(`Invite:${accountId}`)
   }
@@ -62,14 +62,15 @@ export class InviteWorker {
         }
       }
       return invites
-    }
-    catch { return [] }
+    } catch { return [] }
   }
 
   async sendReportArkClick(sharerId: string, sharerOpenId: string, shareSource: string | null) {
     const body = Buffer.from(this.t.ReportArkClickRequest.encode(this.t.ReportArkClickRequest.create({
-      sharer_id: toLong(Number(sharerId)), sharer_open_id: sharerOpenId,
-      share_cfg_id: toLong(Number(shareSource) || 0), scene_id: '1256',
+      sharer_id: toLong(Number(sharerId)),
+      sharer_open_id: sharerOpenId,
+      share_cfg_id: toLong(Number(shareSource) || 0),
+      scene_id: '1256'
     })).finish())
     const { body: rb } = await this.client.sendMsgAsync('gamepb.userpb.UserService', 'ReportArkClick', body)
     return this.t.ReportArkClickReply.decode(rb)
@@ -81,29 +82,33 @@ export class InviteWorker {
       return
     }
     const invites = this.readShareFile()
-    if (!invites.length) return
+    if (!invites.length)
+      return
 
     this.log(`读取到 ${invites.length} 个邀请码（已去重），开始逐个处理...`, 'invite_process')
-    let successCount = 0; let failCount = 0
+    let successCount = 0
+    let failCount = 0
     for (let i = 0; i < invites.length; i++) {
       const invite = invites[i]
       try {
         await this.sendReportArkClick(invite.uid!, invite.openid!, invite.shareSource)
         successCount++
         this.log(`[${i + 1}/${invites.length}] 已向 uid=${invite.uid} 发送好友申请`, 'invite_process')
-      }
-      catch (e: any) {
+      } catch (e: any) {
         failCount++
         this.warn(`[${i + 1}/${invites.length}] 向 uid=${invite.uid} 发送申请失败: ${e?.message}`, 'invite_process')
       }
-      if (i < invites.length - 1) await sleep(INVITE_REQUEST_DELAY)
+      if (i < invites.length - 1)
+        await sleep(INVITE_REQUEST_DELAY)
     }
     this.log(`处理完成: 成功 ${successCount}, 失败 ${failCount}`, 'invite_process')
     this.clearShareFile()
   }
 
   private clearShareFile() {
-    try { fs.writeFileSync(this.getShareFilePath(), '', 'utf-8'); this.log('已清空 share.txt', 'invite_process') }
-    catch {}
+    try {
+      fs.writeFileSync(this.getShareFilePath(), '', 'utf-8')
+      this.log('已清空 share.txt', 'invite_process')
+    } catch {}
   }
 }

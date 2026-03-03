@@ -1,10 +1,10 @@
+import type { DrizzleDB } from '../../database/drizzle.provider'
 import crypto from 'node:crypto'
 import { BadRequestException, Inject, Injectable, UnauthorizedException } from '@nestjs/common'
-import { JwtService } from '@nestjs/jwt'
 import { ConfigService } from '@nestjs/config'
+import { JwtService } from '@nestjs/jwt'
 import { eq } from 'drizzle-orm'
-import { DRIZZLE_TOKEN  } from '../../database/drizzle.provider'
-import type {DrizzleDB} from '../../database/drizzle.provider';
+import { DRIZZLE_TOKEN } from '../../database/drizzle.provider'
 import * as schema from '../../database/schema'
 
 @Injectable()
@@ -12,7 +12,7 @@ export class AuthService {
   constructor(
     private jwtService: JwtService,
     private configService: ConfigService,
-    @Inject(DRIZZLE_TOKEN) private db: DrizzleDB,
+    @Inject(DRIZZLE_TOKEN) private db: DrizzleDB
   ) {}
 
   private hashPassword(pwd: string): string {
@@ -34,7 +34,7 @@ export class AuthService {
       .values({ key: 'adminPasswordHash', value: hash as any })
       .onConflictDoUpdate({
         target: schema.globalConfig.key,
-        set: { value: hash as any },
+        set: { value: hash as any }
       })
   }
 

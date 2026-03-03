@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common'
-import { ProtoService } from './proto.service'
 import { GameClient } from './game-client'
+import { ProtoService } from './proto.service'
 
 @Injectable()
 export class GameClientFactory {

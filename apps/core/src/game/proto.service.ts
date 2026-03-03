@@ -1,6 +1,7 @@
+import type { OnModuleInit } from '@nestjs/common'
 import fs from 'node:fs'
 import path from 'node:path'
-import { Injectable, Logger, OnModuleInit } from '@nestjs/common'
+import { Injectable, Logger } from '@nestjs/common'
 import * as protobuf from 'protobufjs'
 import { ASSETS_DIR, CORE_ROOT, DIST_ROOT } from '../config/paths'
 
@@ -22,7 +23,7 @@ export class ProtoService implements OnModuleInit {
     const candidates = [
       path.join(ASSETS_DIR, 'proto'),
       path.join(DIST_ROOT, 'assets', 'proto'),
-      path.join(CORE_ROOT, 'src', 'assets', 'proto'),
+      path.join(CORE_ROOT, 'src', 'assets', 'proto')
     ]
     return candidates.find(p => fs.existsSync(p)) || candidates[0]
   }
@@ -33,10 +34,22 @@ export class ProtoService implements OnModuleInit {
     this.root = new protobuf.Root()
 
     const protoFiles = [
-      'game.proto', 'userpb.proto', 'plantpb.proto', 'corepb.proto',
-      'shoppb.proto', 'friendpb.proto', 'visitpb.proto', 'notifypb.proto',
-      'taskpb.proto', 'itempb.proto', 'emailpb.proto', 'mallpb.proto',
-      'redpacketpb.proto', 'qqvippb.proto', 'sharepb.proto', 'illustratedpb.proto',
+      'game.proto',
+      'userpb.proto',
+      'plantpb.proto',
+      'corepb.proto',
+      'shoppb.proto',
+      'friendpb.proto',
+      'visitpb.proto',
+      'notifypb.proto',
+      'taskpb.proto',
+      'itempb.proto',
+      'emailpb.proto',
+      'mallpb.proto',
+      'redpacketpb.proto',
+      'qqvippb.proto',
+      'sharepb.proto',
+      'illustratedpb.proto'
     ].map(f => path.join(protoDir, f))
 
     await this.root.load(protoFiles, { keepCase: true })

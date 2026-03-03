@@ -9,7 +9,8 @@ export class StatusController {
   @Get()
   getStatus(@AccountId() accountId: string) {
     const id = this.manager.resolveAccountId(accountId)
-    if (!id) throw new BadRequestException('缺少 x-account-id')
+    if (!id)
+      throw new BadRequestException('缺少 x-account-id')
     return this.manager.getStatus(id)
   }
 }

@@ -10,7 +10,8 @@ export class SchedulerController {
   getScheduler(@AccountId() accountId: string) {
     const id = this.manager.resolveAccountId(accountId)
     const runner = this.manager.getRunner(id)
-    if (!runner) return { running: false }
+    if (!runner)
+      return { running: false }
     return runner.getStatus()
   }
 }

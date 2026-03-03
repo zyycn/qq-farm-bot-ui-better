@@ -10,7 +10,8 @@ export class FarmController {
   @Post('operate')
   async operate(@AccountId() accountId: string, @Body('opType') opType: string) {
     const id = this.manager.resolveAccountId(accountId)
-    if (!id) throw new BadRequestException('缺少 x-account-id')
+    if (!id)
+      throw new BadRequestException('缺少 x-account-id')
     return this.manager.getRunnerOrThrow(id).doFarmOp(opType)
   }
 }
@@ -22,7 +23,8 @@ export class LandsController {
   @Get()
   async getLands(@AccountId() accountId: string) {
     const id = this.manager.resolveAccountId(accountId)
-    if (!id) throw new BadRequestException('缺少 x-account-id')
+    if (!id)
+      throw new BadRequestException('缺少 x-account-id')
     return this.manager.getRunnerOrThrow(id).getLands()
   }
 }
@@ -31,13 +33,14 @@ export class LandsController {
 export class SeedsController {
   constructor(
     private manager: AccountManagerService,
-    private gameConfig: GameConfigService,
+    private gameConfig: GameConfigService
   ) {}
 
   @Get()
   async getSeeds(@AccountId() accountId: string) {
     const id = this.manager.resolveAccountId(accountId)
-    if (!id) throw new BadRequestException('缺少 x-account-id')
+    if (!id)
+      throw new BadRequestException('缺少 x-account-id')
     const runner = this.manager.getRunner(id)
     if (runner)
       return runner.getSeeds()
@@ -53,7 +56,8 @@ export class BagController {
   @Get()
   async getBag(@AccountId() accountId: string) {
     const id = this.manager.resolveAccountId(accountId)
-    if (!id) throw new BadRequestException('缺少 x-account-id')
+    if (!id)
+      throw new BadRequestException('缺少 x-account-id')
     return this.manager.getRunnerOrThrow(id).getBag()
   }
 }
@@ -65,7 +69,8 @@ export class DailyGiftsController {
   @Get()
   async getDailyGifts(@AccountId() accountId: string) {
     const id = this.manager.resolveAccountId(accountId)
-    if (!id) throw new BadRequestException('缺少 x-account-id')
+    if (!id)
+      throw new BadRequestException('缺少 x-account-id')
     return this.manager.getRunnerOrThrow(id).getDailyGiftOverview()
   }
 }

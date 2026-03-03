@@ -1,10 +1,10 @@
-import { Buffer } from 'node:buffer'
-import { Logger } from '@nestjs/common'
+import type { StoreService } from '../../store/store.service'
 import type { GameClient } from '../game-client'
 import type { GameConfigService } from '../game-config.service'
-import type { StoreService } from '../../store/store.service'
 import type { StatsTracker } from './stats.worker'
 import type { WarehouseWorker } from './warehouse.worker'
+import { Buffer } from 'node:buffer'
+import { Logger } from '@nestjs/common'
 import { Scheduler } from '../scheduler'
 import { getServerTimeSec, sleep, toLong, toNum } from '../utils'
 
@@ -22,7 +22,7 @@ export class TaskWorker {
     private gameConfig: GameConfigService,
     private store: StoreService,
     private stats: StatsTracker,
-    private warehouse: WarehouseWorker,
+    private warehouse: WarehouseWorker
   ) {
     this.logger = new Logger(`Task:${accountId}`)
     this.scheduler = new Scheduler(`task-${accountId}`)
@@ -54,9 +54,12 @@ export class TaskWorker {
     return items.map((item: any) => {
       const id = toNum(item.id)
       const count = toNum(item.count)
-      if (id === 1 || id === 1001) return `金币${count}`
-      if (id === 2 || id === 1101) return `经验${count}`
-      if (id === 1002) return `点券${count}`
+      if (id === 1 || id === 1001)
+        return `金币${count}`
+      if (id === 2 || id === 1101)
+        return `经验${count}`
+      if (id === 1002)
+        return `点券${count}`
       const info = this.gameConfig.getItemById(id)
       return `${info?.name || `物品#${id}`}x${count}`
     }).join('/')
@@ -77,14 +80,16 @@ export class TaskWorker {
   }
 
   async claimDailyReward(type: number, pointIds: number[]): Promise<any> {
-    if (!this.t.ClaimDailyRewardRequest || !this.t.ClaimDailyRewardReply) return { items: [] }
+    if (!this.t.ClaimDailyRewardRequest || !this.t.ClaimDailyRewardReply)
+      return { items: [] }
     const body = Buffer.from(this.t.ClaimDailyRewardRequest.encode(this.t.ClaimDailyRewardRequest.create({ type: Number(type) || 0, point_ids: pointIds.map(id => toLong(id)) })).finish())
     const { body: rb } = await this.client.sendMsgAsync('gamepb.taskpb.TaskService', 'ClaimDailyReward', body)
     return this.t.ClaimDailyRewardReply.decode(rb)
   }
 
   async claimAllIllustratedRewards(): Promise<any> {
-    if (!this.t.ClaimAllRewardsV2Request || !this.t.ClaimAllRewardsV2Reply) return { items: [], bonus_items: [] }
+    if (!this.t.ClaimAllRewardsV2Request || !this.t.ClaimAllRewardsV2Reply)
+      return { items: [], bonus_items: [] }
     const body = Buffer.from(this.t.ClaimAllRewardsV2Request.encode(this.t.ClaimAllRewardsV2Request.create({ only_claimable: true })).finish())
     const { body: rb } = await this.client.sendMsgAsync('gamepb.illustratedpb.IllustratedService', 'ClaimAllRewardsV2', body)
     return this.t.ClaimAllRewardsV2Reply.decode(rb)
@@ -94,12 +99,16 @@ export class TaskWorker {
 
   private formatTask(t: any, category = 'main') {
     return {
-      id: toNum(t.id), desc: t.desc || `任务#${toNum(t.id)}`, category,
-      progress: toNum(t.progress), totalProgress: toNum(t.total_progress),
-      isClaimed: t.is_claimed, isUnlocked: t.is_unlocked,
+      id: toNum(t.id),
+      desc: t.desc || `任务#${toNum(t.id)}`,
+      category,
+      progress: toNum(t.progress),
+      totalProgress: toNum(t.total_progress),
+      isClaimed: t.is_claimed,
+      isUnlocked: t.is_unlocked,
       shareMultiple: toNum(t.share_multiple),
       rewards: (t.rewards || []).map((r: any) => ({ id: toNum(r.id), count: toNum(r.count) })),
-      canClaim: t.is_unlocked && !t.is_claimed && toNum(t.progress) >= toNum(t.total_progress) && toNum(t.total_progress) > 0,
+      canClaim: t.is_unlocked && !t.is_claimed && toNum(t.progress) >= toNum(t.total_progress) && toNum(t.total_progress) > 0
     }
   }
 
@@ -110,7 +119,8 @@ export class TaskWorker {
   private buildDailyTasks(taskInfo: any) {
     const ti = taskInfo && typeof taskInfo === 'object' ? taskInfo : {}
     const dailyList = Array.isArray(ti.daily_tasks) ? ti.daily_tasks : []
-    if (dailyList.length > 0) return dailyList
+    if (dailyList.length > 0)
+      return dailyList
     return [...(ti.tasks || []), ...(ti.growth_tasks || [])].filter((t: any) => toNum(t?.task_type) === 2)
   }
 
@@ -128,8 +138,7 @@ export class TaskWorker {
       this.stats.recordOperation('taskClaim', 1)
       await sleep(300)
       return true
-    }
-    catch { return false }
+    } catch { return false }
   }
 
   private async checkAndClaimActives(actives: any[]) {
@@ -137,9 +146,11 @@ export class TaskWorker {
     for (const active of actives) {
       const activeType = toNum(active.type)
       const claimable = (active.rewards || []).filter((r: any) => toNum(r.status) === 2)
-      if (!claimable.length) continue
+      if (!claimable.length)
+        continue
       const pointIds = claimable.map((r: any) => toNum(r.point_id)).filter((n: number) => n > 0)
-      if (!pointIds.length) continue
+      if (!pointIds.length)
+        continue
       const typeName = activeType === 1 ? '日活跃' : (activeType === 2 ? '周活跃' : `活跃${activeType}`)
       try {
         this.log(`${typeName} 发现 ${pointIds.length} 个可领取奖励`, 'task_scan')
@@ -149,8 +160,7 @@ export class TaskWorker {
           this.log(`${typeName} 领取: ${this.getRewardSummary(items)}`, 'task_claim')
         claimed += pointIds.length
         await sleep(300)
-      }
-      catch (e: any) { this.warn(`${typeName} 领取失败: ${e?.message}`, 'task_claim') }
+      } catch (e: any) { this.warn(`${typeName} 领取失败: ${e?.message}`, 'task_claim') }
     }
     return claimed
   }
@@ -161,41 +171,45 @@ export class TaskWorker {
       await this.claimAllIllustratedRewards()
       const afterTicket = await this.getTicketBalance()
       const gain = Math.max(0, afterTicket - beforeTicket)
-      if (gain < 200) return false
+      if (gain < 200)
+        return false
       this.log(`图鉴领取成功: 点券${gain}`, 'illustrated_rewards')
       this.taskClaimDoneDateKey = this.getDateKey()
       this.taskClaimLastAt = Date.now()
       this.stats.recordOperation('taskClaim', 1)
       return true
-    }
-    catch { return false }
+    } catch { return false }
   }
 
   private async getTicketBalance(): Promise<number> {
     try {
       const rep = await this.warehouse.getBag()
       const items = this.warehouse.getBagItems(rep)
-      for (const it of (items || [])) { if (toNum(it?.id) === 1002) return Math.max(0, toNum(it?.count)) }
+      for (const it of (items || [])) {
+        if (toNum(it?.id) === 1002)
+          return Math.max(0, toNum(it?.count))
+      }
       return 0
-    }
-    catch { return 0 }
+    } catch { return 0 }
   }
 
   // ========== Main Check ==========
 
   async checkAndClaimTasks() {
-    if (this.checking || !this.store.isAutomationOn('task', this.accountId)) return
+    if (this.checking || !this.store.isAutomationOn('task', this.accountId))
+      return
     this.checking = true
     try {
       const reply = await this.getTaskInfo()
-      if (!reply.task_info) return
+      if (!reply.task_info)
+        return
 
       const taskInfo = reply.task_info
       const dailyAll = this.buildDailyTasks(taskInfo)
       const claimable = [
         ...this.analyzeTaskList(dailyAll, 'daily'),
         ...this.analyzeTaskList(taskInfo.growth_tasks || [], 'growth'),
-        ...this.analyzeTaskList(taskInfo.tasks || [], 'main'),
+        ...this.analyzeTaskList(taskInfo.tasks || [], 'main')
       ]
 
       if (claimable.length > 0) {
@@ -204,26 +218,32 @@ export class TaskWorker {
       }
       await this.checkAndClaimActives(taskInfo.actives || [])
       await this.checkAndClaimIllustratedRewards()
+    } catch (e: any) {
+      this.warn(`检查任务失败: ${e?.message}`, 'task_scan')
+    } finally {
+      this.checking = false
     }
-    catch (e: any) { this.warn(`检查任务失败: ${e?.message}`, 'task_scan') }
-    finally { this.checking = false }
   }
 
   // ========== Event Handling ==========
 
   private onTaskInfoNotify = (taskInfo: any) => {
-    if (!taskInfo || !this.store.isAutomationOn('task', this.accountId)) return
+    if (!taskInfo || !this.store.isAutomationOn('task', this.accountId))
+      return
     const claimable = [
       ...this.analyzeTaskList(taskInfo.daily_tasks || [], 'daily'),
       ...this.analyzeTaskList(taskInfo.growth_tasks || [], 'growth'),
-      ...this.analyzeTaskList(taskInfo.tasks || [], 'main'),
+      ...this.analyzeTaskList(taskInfo.tasks || [], 'main')
     ]
     const actives = taskInfo.actives || []
-    if (!claimable.length && !actives.length) return
+    if (!claimable.length && !actives.length)
+      return
     if (claimable.length)
       this.log(`有 ${claimable.length} 个任务可领取，准备自动领取...`, 'task_claim')
     this.scheduler.setTimeoutTask('task_claim_debounce', 1000, async () => {
-      if (claimable.length) for (const task of claimable) await this.doClaim(task)
+      if (claimable.length) {
+        for (const task of claimable) await this.doClaim(task)
+      }
       await this.checkAndClaimActives(actives)
       await this.checkAndClaimIllustratedRewards()
     })
@@ -254,13 +274,16 @@ export class TaskWorker {
       const reply = await this.getTaskInfo()
       const ti = reply?.task_info || {}
       const dailyAll = this.buildDailyTasks(ti)
-      const completedDaily = dailyAll.filter((t: any) => { const p = toNum(t?.progress); const tp = toNum(t?.total_progress); return tp > 0 && p >= tp })
+      const completedDaily = dailyAll.filter((t: any) => {
+        const p = toNum(t?.progress)
+        const tp = toNum(t?.total_progress)
+        return tp > 0 && p >= tp
+      })
       const completedCount = Math.min(3, completedDaily.length)
       const pendingDaily = dailyAll.filter((t: any) => !!(t?.is_unlocked) && !(t?.is_claimed) && toNum(t?.total_progress) > 0)
       const dailyClaimable = this.analyzeTaskList(dailyAll, 'daily')
       return { key: 'task_claim', doneToday: completedCount >= 3, lastClaimAt: this.taskClaimLastAt, claimableCount: dailyClaimable.length, pendingCount: pendingDaily.length, completedCount, totalCount: 3 }
-    }
-    catch { return { key: 'task_claim', doneToday: false, lastClaimAt: this.taskClaimLastAt, claimableCount: 0, pendingCount: 0, completedCount: 0, totalCount: 3 } }
+    } catch { return { key: 'task_claim', doneToday: false, lastClaimAt: this.taskClaimLastAt, claimableCount: 0, pendingCount: 0, completedCount: 0, totalCount: 3 } }
   }
 
   async getGrowthTaskStateLikeApp() {
@@ -275,8 +298,7 @@ export class TaskWorker {
       })
       const completedCount = tasks.filter((t: any) => t.isCompleted).length
       return { key: 'growth_task', doneToday: tasks.length > 0 && completedCount >= tasks.length, completedCount, totalCount: tasks.length, tasks }
-    }
-    catch { return { key: 'growth_task', doneToday: false, completedCount: 0, totalCount: 0, tasks: [] } }
+    } catch { return { key: 'growth_task', doneToday: false, completedCount: 0, totalCount: 0, tasks: [] } }
   }
 
   destroy() {

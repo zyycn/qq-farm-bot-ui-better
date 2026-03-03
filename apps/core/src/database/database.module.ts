@@ -4,6 +4,6 @@ import { drizzleProvider } from './drizzle.provider'
 @Global()
 @Module({
   providers: [drizzleProvider],
-  exports: [drizzleProvider],
+  exports: [drizzleProvider]
 })
 export class DatabaseModule {}

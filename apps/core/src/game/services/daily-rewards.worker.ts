@@ -1,7 +1,7 @@
-import { Buffer } from 'node:buffer'
-import { Logger } from '@nestjs/common'
 import type { GameClient } from '../game-client'
 import type { GameConfigService } from '../game-config.service'
+import { Buffer } from 'node:buffer'
+import { Logger } from '@nestjs/common'
 import { toNum } from '../utils'
 
 function getDateKey(): string {
@@ -13,9 +13,12 @@ function getRewardSummary(items: any[], gameConfig: GameConfigService): string {
   return (items || []).filter(it => toNum(it?.count) > 0).map((it) => {
     const id = toNum(it.id)
     const count = toNum(it.count)
-    if (id === 1 || id === 1001) return `金币${count}`
-    if (id === 2 || id === 1101) return `经验${count}`
-    if (id === 1002) return `点券${count}`
+    if (id === 1 || id === 1001)
+      return `金币${count}`
+    if (id === 2 || id === 1101)
+      return `经验${count}`
+    if (id === 1002)
+      return `点券${count}`
     return `${gameConfig.getItemName(id)}x${count}`
   }).join('/')
 }
@@ -50,7 +53,7 @@ export class DailyRewardsWorker {
     private accountId: string,
     private client: GameClient,
     private gameConfig: GameConfigService,
-    private store?: any,
+    private store?: any
   ) {
     this.logger = new Logger(`DailyRewards:${accountId}`)
   }
@@ -69,8 +72,10 @@ export class DailyRewardsWorker {
 
   async checkAndClaimEmails(force = false): Promise<{ claimed: number, rewardItems: number }> {
     const now = Date.now()
-    if (!force && this.emailDone === getDateKey()) return { claimed: 0, rewardItems: 0 }
-    if (!force && now - this.emailLastCheck < this.CHECK_COOLDOWN_MS) return { claimed: 0, rewardItems: 0 }
+    if (!force && this.emailDone === getDateKey())
+      return { claimed: 0, rewardItems: 0 }
+    if (!force && now - this.emailLastCheck < this.CHECK_COOLDOWN_MS)
+      return { claimed: 0, rewardItems: 0 }
     this.emailLastCheck = now
 
     try {
@@ -83,15 +88,20 @@ export class DailyRewardsWorker {
 
       const [box1, box2] = await Promise.all([
         getEmailList(1).catch(() => ({ emails: [] })),
-        getEmailList(2).catch(() => ({ emails: [] })),
+        getEmailList(2).catch(() => ({ emails: [] }))
       ])
 
       const merged = new Map<string, any>()
       for (const x of [...(box1.emails || []).map((e: any) => ({ ...e, __boxType: 1 })), ...(box2.emails || []).map((e: any) => ({ ...e, __boxType: 2 }))]) {
-        if (!x?.id) continue
-        if (!merged.has(x.id)) { merged.set(x.id, x); continue }
+        if (!x?.id)
+          continue
+        if (!merged.has(x.id)) {
+          merged.set(x.id, x)
+          continue
+        }
         const old = merged.get(x.id)
-        if (!(old?.has_reward && !old?.claimed) && (x?.has_reward && !x?.claimed)) merged.set(x.id, x)
+        if (!(old?.has_reward && !old?.claimed) && (x?.has_reward && !x?.claimed))
+          merged.set(x.id, x)
       }
 
       const claimable = [...merged.values()].filter(x => x?.has_reward === true && x?.claimed !== true)
@@ -108,20 +118,22 @@ export class DailyRewardsWorker {
       const byBox = new Map<number, any[]>()
       for (const m of claimable) {
         const bt = m.__boxType === 2 ? 2 : 1
-        if (!byBox.has(bt)) byBox.set(bt, [])
+        if (!byBox.has(bt))
+          byBox.set(bt, [])
         byBox.get(bt)!.push(m)
       }
       for (const [bt, list] of byBox) {
         try {
           const firstId = String(list[0]?.id || '')
-          if (!firstId) continue
+          if (!firstId)
+            continue
           const body = Buffer.from(t.BatchClaimEmailRequest.encode(t.BatchClaimEmailRequest.create({ box_type: bt, email_id: firstId })).finish())
           const { body: rb } = await this.client.sendMsgAsync('gamepb.emailpb.EmailService', 'BatchClaimEmail', body)
           const rep: any = t.BatchClaimEmailReply.decode(rb)
-          if (rep.items?.length) rewards.push(...rep.items)
+          if (rep.items?.length)
+            rewards.push(...rep.items)
           claimed++
-        }
-        catch {}
+        } catch {}
       }
 
       for (const m of claimable) {
@@ -130,10 +142,10 @@ export class DailyRewardsWorker {
           const body = Buffer.from(t.ClaimEmailRequest.encode(t.ClaimEmailRequest.create({ box_type: bt, email_id: String(m.id || '') })).finish())
           const { body: rb } = await this.client.sendMsgAsync('gamepb.emailpb.EmailService', 'ClaimEmail', body)
           const rep: any = t.ClaimEmailReply.decode(rb)
-          if (rep.items?.length) rewards.push(...rep.items)
+          if (rep.items?.length)
+            rewards.push(...rep.items)
           claimed++
-        }
-        catch {}
+        } catch {}
       }
 
       if (claimed > 0) {
@@ -142,8 +154,7 @@ export class DailyRewardsWorker {
         this.emailDone = getDateKey()
       }
       return { claimed, rewardItems: rewards.length }
-    }
-    catch (e: any) {
+    } catch (e: any) {
       this.warn(`领取邮箱奖励失败: ${e?.message}`, 'email_rewards')
       return { claimed: 0, rewardItems: 0 }
     }
@@ -153,8 +164,10 @@ export class DailyRewardsWorker {
 
   async performDailyMonthCardGift(force = false): Promise<boolean> {
     const now = Date.now()
-    if (!force && this.monthCardDone === getDateKey()) return false
-    if (!force && now - this.monthCardLastCheck < this.CHECK_COOLDOWN_MS) return false
+    if (!force && this.monthCardDone === getDateKey())
+      return false
+    if (!force && now - this.monthCardLastCheck < this.CHECK_COOLDOWN_MS)
+      return false
     this.monthCardLastCheck = now
 
     try {
@@ -180,16 +193,17 @@ export class DailyRewardsWorker {
           const reward = getRewardSummary(ret.items || [], this.gameConfig)
           this.log(reward ? `月卡领取成功 → ${reward}` : '月卡领取成功', 'month_card_gift')
           claimed++
-        }
-        catch (e: any) {
+        } catch (e: any) {
           this.warn(`月卡领取失败: ${e?.message}`, 'month_card_gift')
         }
       }
 
-      if (claimed > 0) { this.monthCardLastClaim = Date.now(); this.monthCardDone = getDateKey() }
+      if (claimed > 0) {
+        this.monthCardLastClaim = Date.now()
+        this.monthCardDone = getDateKey()
+      }
       return claimed > 0
-    }
-    catch (e: any) {
+    } catch (e: any) {
       this.warn(`查询月卡礼包失败: ${e?.message}`, 'month_card_gift')
       return false
     }
@@ -199,8 +213,10 @@ export class DailyRewardsWorker {
 
   async performDailyOpenServerGift(force = false): Promise<boolean> {
     const now = Date.now()
-    if (!force && this.openServerDone === getDateKey()) return false
-    if (!force && now - this.openServerLastCheck < this.CHECK_COOLDOWN_MS) return false
+    if (!force && this.openServerDone === getDateKey())
+      return false
+    if (!force && now - this.openServerLastCheck < this.CHECK_COOLDOWN_MS)
+      return false
     this.openServerLastCheck = now
 
     try {
@@ -226,18 +242,22 @@ export class DailyRewardsWorker {
           const reward = getRewardSummary(items, this.gameConfig)
           this.log(reward ? `开服红包领取成功 → ${reward}` : '开服红包领取成功', 'open_server_gift')
           claimed++
-        }
-        catch (e: any) {
+        } catch (e: any) {
           const msg = String(e?.message || '')
-          if (msg.includes('已领取') || msg.includes('次数已达上限')) { this.openServerDone = getDateKey(); break }
+          if (msg.includes('已领取') || msg.includes('次数已达上限')) {
+            this.openServerDone = getDateKey()
+            break
+          }
           this.warn(`开服红包领取失败: ${msg}`, 'open_server_gift')
         }
       }
 
-      if (claimed > 0) { this.openServerLastClaim = Date.now(); this.openServerDone = getDateKey() }
+      if (claimed > 0) {
+        this.openServerLastClaim = Date.now()
+        this.openServerDone = getDateKey()
+      }
       return claimed > 0
-    }
-    catch (e: any) {
+    } catch (e: any) {
       this.warn(`领取开服红包失败: ${e?.message}`, 'open_server_gift')
       return false
     }
@@ -247,8 +267,10 @@ export class DailyRewardsWorker {
 
   async performDailyVipGift(force = false): Promise<boolean> {
     const now = Date.now()
-    if (!force && this.vipDone === getDateKey()) return false
-    if (!force && now - this.vipLastCheck < this.CHECK_COOLDOWN_MS) return false
+    if (!force && this.vipDone === getDateKey())
+      return false
+    if (!force && now - this.vipLastCheck < this.CHECK_COOLDOWN_MS)
+      return false
     this.vipLastCheck = now
 
     try {
@@ -271,10 +293,12 @@ export class DailyRewardsWorker {
       this.vipLastClaim = Date.now()
       this.vipDone = getDateKey()
       return true
-    }
-    catch (e: any) {
+    } catch (e: any) {
       const msg = String(e?.message || '')
-      if (msg.includes('已领取')) { this.vipDone = getDateKey(); return false }
+      if (msg.includes('已领取')) {
+        this.vipDone = getDateKey()
+        return false
+      }
       this.warn(`领取会员礼包失败: ${msg}`, 'vip_daily_gift')
       return false
     }
@@ -284,8 +308,10 @@ export class DailyRewardsWorker {
 
   async performDailyShare(force = false): Promise<boolean> {
     const now = Date.now()
-    if (!force && this.shareDone === getDateKey()) return false
-    if (!force && now - this.shareLastCheck < this.CHECK_COOLDOWN_MS) return false
+    if (!force && this.shareDone === getDateKey())
+      return false
+    if (!force && now - this.shareLastCheck < this.CHECK_COOLDOWN_MS)
+      return false
     this.shareLastCheck = now
 
     try {
@@ -321,8 +347,7 @@ export class DailyRewardsWorker {
       this.shareLastClaim = Date.now()
       this.shareDone = getDateKey()
       return true
-    }
-    catch (e: any) {
+    } catch (e: any) {
       this.warn(`领取分享奖励失败: ${e?.message}`, 'daily_share')
       return false
     }
@@ -332,8 +357,10 @@ export class DailyRewardsWorker {
 
   async buyFreeGifts(force = false): Promise<number> {
     const now = Date.now()
-    if (!force && this.freeGiftDone === getDateKey()) return 0
-    if (!force && now - this.freeGiftLastCheck < this.CHECK_COOLDOWN_MS) return 0
+    if (!force && this.freeGiftDone === getDateKey())
+      return 0
+    if (!force && now - this.freeGiftLastCheck < this.CHECK_COOLDOWN_MS)
+      return 0
     this.freeGiftLastCheck = now
 
     try {
@@ -344,7 +371,9 @@ export class DailyRewardsWorker {
       const raw = mall.goods_list || []
       const goods: any[] = []
       for (const b of raw) {
-        try { goods.push(t.MallGoods.decode(b)) } catch {}
+        try {
+          goods.push(t.MallGoods.decode(b))
+        } catch {}
       }
       const free = goods.filter(g => g?.is_free === true && Number(g.goods_id || 0) > 0)
       if (!free.length) {
@@ -359,16 +388,14 @@ export class DailyRewardsWorker {
           const purchaseBody = Buffer.from(t.PurchaseRequest.encode(t.PurchaseRequest.create({ goods_id: Number(g.goods_id), count: 1 })).finish())
           await this.client.sendMsgAsync('gamepb.mallpb.MallService', 'Purchase', purchaseBody)
           bought++
-        }
-        catch {}
+        } catch {}
       }
       this.freeGiftDone = getDateKey()
       if (bought > 0) {
         this.log(`自动购买免费礼包 x${bought}`, 'mall_free_gifts')
       }
       return bought
-    }
-    catch (e: any) {
+    } catch (e: any) {
       this.warn(`领取免费礼包失败: ${e?.message}`, 'mall_free_gifts')
       return 0
     }
@@ -384,7 +411,8 @@ export class DailyRewardsWorker {
 
   async autoBuyOrganicFertilizer(force = false): Promise<number> {
     const now = Date.now()
-    if (!force && now - this.lastBuyAt < DailyRewardsWorker.BUY_COOLDOWN_MS) return 0
+    if (!force && now - this.lastBuyAt < DailyRewardsWorker.BUY_COOLDOWN_MS)
+      return 0
     this.lastBuyAt = now
     try {
       const t = this.client.protoTypes
@@ -393,9 +421,14 @@ export class DailyRewardsWorker {
       const mall: any = t.GetMallListBySlotTypeResponse.decode(rb)
       const raw = mall.goods_list || []
       const goods: any[] = []
-      for (const b of raw) { try { goods.push(t.MallGoods.decode(b)) } catch {} }
+      for (const b of raw) {
+        try {
+          goods.push(t.MallGoods.decode(b))
+        } catch {}
+      }
       const target = goods.find(g => Number(g?.goods_id || 0) === DailyRewardsWorker.ORGANIC_FERTILIZER_MALL_GOODS_ID)
-      if (!target) return 0
+      if (!target)
+        return 0
 
       let totalBought = 0
       for (let i = 0; i < DailyRewardsWorker.MAX_ROUNDS; i++) {
@@ -403,8 +436,7 @@ export class DailyRewardsWorker {
           const purchaseBody = Buffer.from(t.PurchaseRequest.encode(t.PurchaseRequest.create({ goods_id: DailyRewardsWorker.ORGANIC_FERTILIZER_MALL_GOODS_ID, count: DailyRewardsWorker.BUY_PER_ROUND })).finish())
           await this.client.sendMsgAsync('gamepb.mallpb.MallService', 'Purchase', purchaseBody)
           totalBought += DailyRewardsWorker.BUY_PER_ROUND
-        }
-        catch { break }
+        } catch { break }
         await new Promise(r => setTimeout(r, 120))
       }
 
@@ -414,8 +446,7 @@ export class DailyRewardsWorker {
         this.log(`自动购买有机化肥 x${totalBought}`, 'fertilizer_buy')
       }
       return totalBought
-    }
-    catch { return 0 }
+    } catch { return 0 }
   }
 
   // ========== Daily State Getters ==========
